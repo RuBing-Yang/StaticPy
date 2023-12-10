@@ -18,7 +18,7 @@ void printAST(const string prefix, const ASTNODE* node, ofstream *outfile, bool 
 int main()
 {
     ifstream in_file;
-	ofstream lex_file, grammar_file, ast_file;
+	ofstream lex_file, grammar_file, ast_file, cpp_file;
 
     TOKEN *token=nullptr, *p;
     ASTNODE* root = new ASTNode("", "CompUnit");
@@ -27,11 +27,13 @@ int main()
 	lex_file.open("files/lex_file.txt");
     grammar_file.open("files/grammar_file.txt");
     ast_file.open("files/ast_file.txt");
+    cpp_file.open("files/cpp_file.txt");
 
     lexAnalysis(&in_file, &token, &lex_file);
     grammarAnalysis(&token, "CompUnit", root, &grammar_file);
-
     printAST("", root, &ast_file);
+
+    genCppCode(root, "CompUnit", &cpp_file);
 
 	return 0;
 }

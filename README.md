@@ -18,7 +18,7 @@
 编译：
 
 ```
-g++ lex.cpp main.cpp grammar.cpp -o compiler
+g++ lex.cpp main.cpp grammar.cpp gencode.cpp -o compiler
 ```
 
 
@@ -60,7 +60,9 @@ TODO:
 
 ```pseudocode
 CompUnit ::= {FuncDef}
-InitVal ::= Exp | '[' [InitVal {',' InitVal}] ']' | '{' [InitVal {',' InitVal}] '}'
+InitVal ::= Exp
+    | '[' [InitVal {',' InitVal}] ']' 
+    | '{' [InitVal {',' InitVal}] '}'
 FuncDef ::= 'def' Ident '(' [FuncFParams] ')' '->' ('None' | DataType) Block
 DataType ::= 'int' | 'List' | 'Dict'
 Block ::= ':' 'AddTab' {BlockItem} 'DelTab'
@@ -74,7 +76,7 @@ Stmt ::= Exp
     | 'while' Cond Block
     | 'break' | 'continue'
     | 'return' [Exp]  #返回值类型检查
-    | 'print' '(' [STRCON] ')'
+    | 'print' '(' [(Str | Exp) {',' (Str | Exp)}] ')'
 Exp ::= AddExp
 AddExp ::= MulExp { ('+' | '−') MulExp }
 MulExp ::= UnaryExp { ('*' | '/' | '%') UnaryExp }

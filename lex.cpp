@@ -1,4 +1,3 @@
-
 #include "definition.h"
 
 void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)

@@ -64,7 +64,15 @@
      |         |              |    |--<Stmt> 
      |         |              |         |--<PRINTTK> print
      |         |              |         |--<LPARENT> (
-     |         |              |         |--<STRCON> "i is 1"
+     |         |              |         |--<STRCON> "i is:"
+     |         |              |         |--<COMMA> ,
+     |         |              |         |--<Exp> 
+     |         |              |         |    |--<AddExp> 
+     |         |              |         |         |--<MulExp> 
+     |         |              |         |              |--<UnaryExp> 
+     |         |              |         |                   |--<PrimaryExp> 
+     |         |              |         |                        |--<LVal> 
+     |         |              |         |                             |--<IDENFR> i
      |         |              |         |--<RPARENT> )
      |         |              |--<DELTAB> DelTab
      |         |--<DELTAB> DelTab
@@ -99,6 +107,8 @@
           |--<IDENFR> main
           |--<LPARENT> (
           |--<RPARENT> )
+          |--<ARROW> ->
+          |--<INTTK> int
           |--<Block> 
                |--<COLON> :
                |--<ADDTAB> AddTab

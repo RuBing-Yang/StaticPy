@@ -59,7 +59,15 @@ COLON :
 ADDTAB AddTab
 PRINTTK print
 LPARENT (
-STRCON "i is 1"
+STRCON "i is:"
+COMMA ,
+IDENFR i
+<LVal>
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+<AddExp>
+<Exp>
 RPARENT )
 <Stmt>
 DELTAB DelTab
@@ -97,6 +105,8 @@ DEFTK def
 IDENFR main
 LPARENT (
 RPARENT )
+ARROW ->
+INTTK int
 COLON :
 ADDTAB AddTab
 IDENFR l

@@ -1,0 +1,10 @@
+#include <map>
+#include <vector>
+using namespace std;
+
+void func1()
+{
+int i = 1 + 1 * 1 - 1;
+if ({
+cout << ""i is:"" << << i<< endl;
+}
