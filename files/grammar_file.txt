@@ -1,0 +1,155 @@
+DEFTK def
+IDENFR func1
+LPARENT (
+RPARENT )
+ARROW ->
+NONETK None
+COLON :
+ADDTAB AddTab
+IDENFR i
+COLON :
+INTTK int
+ASSIGN =
+INTCON 1
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+<AddExp>
+PLUS +
+INTCON 1
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+MULT *
+INTCON 1
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+<AddExp>
+MINU -
+INTCON 1
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+<AddExp>
+<Exp>
+<InitVal>
+<Decl>
+IFTK if
+IDENFR i
+<LVal>
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+<AddExp>
+<RelExp>
+<EqExp>
+EQL ==
+INTCON 1
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+<AddExp>
+<RelExp>
+<EqExp>
+<LAndExp>
+<LOrExp>
+<Cond>
+COLON :
+ADDTAB AddTab
+PRINTTK print
+LPARENT (
+STRCON "i is 1"
+RPARENT )
+<Stmt>
+DELTAB DelTab
+<Block>
+<Stmt>
+DELTAB DelTab
+<Block>
+<FuncDef>
+DEFTK def
+IDENFR func2
+LPARENT (
+IDENFR l
+COLON :
+LISTTK List
+<FuncFParam>
+<FuncFParams>
+RPARENT )
+ARROW ->
+LISTTK List
+COLON :
+ADDTAB AddTab
+RETURNTK return
+IDENFR l
+<LVal>
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+<AddExp>
+<Exp>
+<Stmt>
+DELTAB DelTab
+<Block>
+<FuncDef>
+DEFTK def
+IDENFR main
+LPARENT (
+RPARENT )
+COLON :
+ADDTAB AddTab
+IDENFR l
+COLON :
+LISTTK List
+ASSIGN =
+LBRACK [
+INTCON 1
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+<AddExp>
+<Exp>
+<InitVal>
+COMMA ,
+INTCON 2
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+<AddExp>
+<Exp>
+<InitVal>
+COMMA ,
+INTCON 3
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+<AddExp>
+<Exp>
+<InitVal>
+RBRACK ]
+<InitVal>
+<Decl>
+IDENFR l2
+<LVal>
+ASSIGN =
+IDENFR func2
+LPARENT (
+IDENFR l
+<LVal>
+<PrimaryExp>
+<UnaryExp>
+<MulExp>
+<AddExp>
+<Exp>
+<FuncRParams>
+RPARENT )
+<UnaryExp>
+<MulExp>
+<AddExp>
+<Exp>
+<Stmt>
+DELTAB DelTab
+<Block>
+<FuncDef>
+<CompUnit>

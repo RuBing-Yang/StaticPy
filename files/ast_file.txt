@@ -1,0 +1,157 @@
+|--<CompUnit> 
+     |--<FuncDef> 
+     |    |--<DEFTK> def
+     |    |--<IDENFR> func1
+     |    |--<LPARENT> (
+     |    |--<RPARENT> )
+     |    |--<ARROW> ->
+     |    |--<NONETK> None
+     |    |--<Block> 
+     |         |--<COLON> :
+     |         |--<ADDTAB> AddTab
+     |         |--<BlockItem> 
+     |         |    |--<Decl> 
+     |         |         |--<IDENFR> i
+     |         |         |--<COLON> :
+     |         |         |--<INTTK> int
+     |         |         |--<ASSIGN> =
+     |         |         |--<InitVal> 
+     |         |              |--<Exp> 
+     |         |                   |--<AddExp> 
+     |         |                        |--<MulExp> 
+     |         |                        |    |--<UnaryExp> 
+     |         |                        |         |--<PrimaryExp> 
+     |         |                        |              |--<INTCON> 1
+     |         |                        |--<PLUS> +
+     |         |                        |--<MulExp> 
+     |         |                        |    |--<UnaryExp> 
+     |         |                        |    |    |--<PrimaryExp> 
+     |         |                        |    |         |--<INTCON> 1
+     |         |                        |    |--<MULT> *
+     |         |                        |    |--<UnaryExp> 
+     |         |                        |         |--<PrimaryExp> 
+     |         |                        |              |--<INTCON> 1
+     |         |                        |--<MINU> -
+     |         |                        |--<MulExp> 
+     |         |                             |--<UnaryExp> 
+     |         |                                  |--<PrimaryExp> 
+     |         |                                       |--<INTCON> 1
+     |         |--<BlockItem> 
+     |         |    |--<Stmt> 
+     |         |         |--<IFTK> if
+     |         |         |--<Cond> 
+     |         |         |    |--<LOrExp> 
+     |         |         |         |--<LAndExp> 
+     |         |         |              |--<EqExp> 
+     |         |         |                   |--<RelExp> 
+     |         |         |                   |    |--<AddExp> 
+     |         |         |                   |         |--<MulExp> 
+     |         |         |                   |              |--<UnaryExp> 
+     |         |         |                   |                   |--<PrimaryExp> 
+     |         |         |                   |                        |--<LVal> 
+     |         |         |                   |                             |--<IDENFR> i
+     |         |         |                   |--<EQL> ==
+     |         |         |                   |--<RelExp> 
+     |         |         |                        |--<AddExp> 
+     |         |         |                             |--<MulExp> 
+     |         |         |                                  |--<UnaryExp> 
+     |         |         |                                       |--<PrimaryExp> 
+     |         |         |                                            |--<INTCON> 1
+     |         |         |--<Block> 
+     |         |              |--<COLON> :
+     |         |              |--<ADDTAB> AddTab
+     |         |              |--<BlockItem> 
+     |         |              |    |--<Stmt> 
+     |         |              |         |--<PRINTTK> print
+     |         |              |         |--<LPARENT> (
+     |         |              |         |--<STRCON> "i is 1"
+     |         |              |         |--<RPARENT> )
+     |         |              |--<DELTAB> DelTab
+     |         |--<DELTAB> DelTab
+     |--<FuncDef> 
+     |    |--<DEFTK> def
+     |    |--<IDENFR> func2
+     |    |--<LPARENT> (
+     |    |--<FuncFParams> 
+     |    |    |--<FuncFParam> 
+     |    |         |--<IDENFR> l
+     |    |         |--<COLON> :
+     |    |         |--<LISTTK> List
+     |    |--<RPARENT> )
+     |    |--<ARROW> ->
+     |    |--<LISTTK> List
+     |    |--<Block> 
+     |         |--<COLON> :
+     |         |--<ADDTAB> AddTab
+     |         |--<BlockItem> 
+     |         |    |--<Stmt> 
+     |         |         |--<RETURNTK> return
+     |         |         |--<Exp> 
+     |         |              |--<AddExp> 
+     |         |                   |--<MulExp> 
+     |         |                        |--<UnaryExp> 
+     |         |                             |--<PrimaryExp> 
+     |         |                                  |--<LVal> 
+     |         |                                       |--<IDENFR> l
+     |         |--<DELTAB> DelTab
+     |--<FuncDef> 
+          |--<DEFTK> def
+          |--<IDENFR> main
+          |--<LPARENT> (
+          |--<RPARENT> )
+          |--<Block> 
+               |--<COLON> :
+               |--<ADDTAB> AddTab
+               |--<BlockItem> 
+               |    |--<Decl> 
+               |         |--<IDENFR> l
+               |         |--<COLON> :
+               |         |--<LISTTK> List
+               |         |--<ASSIGN> =
+               |         |--<InitVal> 
+               |              |--<LBRACK> [
+               |              |--<InitVal> 
+               |              |    |--<Exp> 
+               |              |         |--<AddExp> 
+               |              |              |--<MulExp> 
+               |              |                   |--<UnaryExp> 
+               |              |                        |--<PrimaryExp> 
+               |              |                             |--<INTCON> 1
+               |              |--<COMMA> ,
+               |              |--<InitVal> 
+               |              |    |--<Exp> 
+               |              |         |--<AddExp> 
+               |              |              |--<MulExp> 
+               |              |                   |--<UnaryExp> 
+               |              |                        |--<PrimaryExp> 
+               |              |                             |--<INTCON> 2
+               |              |--<COMMA> ,
+               |              |--<InitVal> 
+               |              |    |--<Exp> 
+               |              |         |--<AddExp> 
+               |              |              |--<MulExp> 
+               |              |                   |--<UnaryExp> 
+               |              |                        |--<PrimaryExp> 
+               |              |                             |--<INTCON> 3
+               |              |--<RBRACK> ]
+               |--<BlockItem> 
+               |    |--<Stmt> 
+               |         |--<LVal> 
+               |         |    |--<IDENFR> l2
+               |         |--<ASSIGN> =
+               |         |--<Exp> 
+               |              |--<AddExp> 
+               |                   |--<MulExp> 
+               |                        |--<UnaryExp> 
+               |                             |--<IDENFR> func2
+               |                             |--<LPARENT> (
+               |                             |--<FuncRParams> 
+               |                             |    |--<Exp> 
+               |                             |         |--<AddExp> 
+               |                             |              |--<MulExp> 
+               |                             |                   |--<UnaryExp> 
+               |                             |                        |--<PrimaryExp> 
+               |                             |                             |--<LVal> 
+               |                             |                                  |--<IDENFR> l
+               |                             |--<RPARENT> )
+               |--<DELTAB> DelTab
