@@ -64,7 +64,7 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
             if (isdigit(s[i])) {
                 bool isFloat = false;
                 t += s[i++];
-                while (i < s.length() && (isdigit(s[i] || s[i]=='.'))) {
+                while (i < s.length() && (isdigit(s[i]) || s[i]=='.')) {
                     if (s[i]=='.') isFloat = true;
                     t += s[i++];
                 }

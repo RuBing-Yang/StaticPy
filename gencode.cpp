@@ -15,18 +15,17 @@ string cpp_unaryop(string s) {
     return "";
 }
 
-void genCppCode(ASTNODE *root, string type, ofstream *outfile){
+void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
     if (root == nullptr) return;
-    cout << "genCppCode " << type << " begin" << endl;
     ASTNODE* p = root->first_child;
     if (type == "CompUnit") {
+        (*outfile) << "#include <iostream>" << endl;
         (*outfile) << "#include <map>" << endl;
         (*outfile) << "#include <vector>" << endl;
         (*outfile) << "using namespace std;" << endl;
         while (p != nullptr) {
             (*outfile) << endl;
-            cout <<  "[CompUnit] " << p->type << endl;
-            genCppCode(p, p->type, outfile);
+            genCppCode(p, p->type, outfile, prefix);
             p = p->next;
         }
     }
@@ -35,84 +34,79 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile){
         while (p->type != "ARROW") p = p->next;
         string func_type = cpp_datatype(p->next->type);
 
-        cout <<  "[FuncDef] " << func_type << endl;
-
         p = root->first_child->next;
         string func_name = p->s;
-        cout <<  "[FuncDef] " << func_name << endl;
         (*outfile) << func_type << " " << func_name << "(";
 
         p = p->next->next;
         if (p->type == "FuncFParams") {
-            genCppCode(p, p->type, outfile);
+            genCppCode(p, p->type, outfile, prefix);
         }
         (*outfile) << ")" << endl;
 
         while (p->type != "Block") p = p->next;
-        cout <<  "[FuncDef] " << func_name << " start Block" << endl;
-		genCppCode(p, p->type, outfile);
-        cout <<  "[FuncDef] " << func_name << " end Block" << endl;
-        cout << "FuncDef end" << endl;
+		genCppCode(p, p->type, outfile, prefix);
     }
     else if (type == "Block") {
-        (*outfile) << "{" << endl;
+        (*outfile) << prefix << "{" << endl;
         while (p->type != "BlockItem") p = p->next;
         while (p != nullptr && p->type == "BlockItem") {
-            genCppCode(p, p->type, outfile);
+            genCppCode(p, p->type, outfile, prefix + "    ");
             p = p->next;
         }
-        (*outfile) << "}" << endl;
+        (*outfile) << prefix << "}" << endl;
     }
     else if (type == "BlockItem") {
         // Decl | Stmt
-        genCppCode(p, p->type, outfile);
-        (*outfile) << ";" << endl;
+        genCppCode(p, p->type, outfile, prefix);
     }
     else if (type == "Decl") {
-        (*outfile) << cpp_datatype(p->next->next->type) << " " << p->s;
+        string datatype = cpp_datatype(p->next->next->type);
+        (*outfile) << prefix << datatype << " " << p->s;
         p = p->next->next->next;
         if (p != nullptr && p->type == "ASSIGN") {
             (*outfile) << " = ";
             p = p->next;
-            genCppCode(p, p->type, outfile); // InitVal
+            genCppCode(p, p->type, outfile, prefix); // InitVal
         }
+        (*outfile) << ";" << endl;
     }
     else if (type == "InitVal") {
 		if (p->type == "LBRACK") {  // List
-            (*outfile) << "[";
+            (*outfile) << "{";
             p = p->next;
             if (p->type == "InitVal") {
-                genCppCode(p, p->type, outfile);
+                genCppCode(p, p->type, outfile, prefix);
                 p = p->next;
                 while (p->type == "COMMA") {
                     p = p->next;
                     (*outfile) << ", ";
-                    genCppCode(p, p->type, outfile);  // InitVal
+                    genCppCode(p, p->type, outfile, prefix);  // InitVal
                     p = p->next;
                 }
             }
-			(*outfile) << "]";
+			(*outfile) << "}";
 		}
         else if (p->type == "LBRACE") {  // Dict
             (*outfile) << "{";
             p = p->next;
             if (p->type == "InitVal") {
                 (*outfile) << "{";
-                genCppCode(p, p->type, outfile);  // InitVal
+                genCppCode(p, p->type, outfile, prefix);  // InitVal
                 p = p->next;
                 (*outfile) << ", ";  // COLON
                 p = p->next;
-                genCppCode(p, p->type, outfile);  // InitVal
+                genCppCode(p, p->type, outfile, prefix);  // InitVal
                 p = p->next;
                 (*outfile) << "}";
                 while (p->type == "COMMA") {
                     p = p->next;
                     (*outfile) << ", {";
-                    genCppCode(p, p->type, outfile);  // InitVal
+                    genCppCode(p, p->type, outfile, prefix);  // InitVal
                     p = p->next;
                     (*outfile) << ", ";  // COLON
                     p = p->next;
-                    genCppCode(p, p->type, outfile);  // InitVal
+                    genCppCode(p, p->type, outfile, prefix);  // InitVal
                     p = p->next;
                     (*outfile) << "}";
                 }
@@ -120,16 +114,16 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile){
 			(*outfile) << "}";
 		}
 		else {  // Exp
-            genCppCode(p, p->type, outfile);
+            genCppCode(p, p->type, outfile, prefix);
 		}
     }
     else if (type == "FuncFParams") {
-        genCppCode(p, p->type, outfile);
+        genCppCode(p, p->type, outfile, prefix);
         p = p->next;
 		while (p != nullptr && p->type == "COMMA") {
             (*outfile) << ", ";
             p = p->next;
-			genCppCode(p, p->type, outfile);
+			genCppCode(p, p->type, outfile, prefix);
             p = p->next;
 		}
     }
@@ -139,102 +133,107 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile){
     }
     else if (type == "Stmt") {
 		if (p->type == "LVal") {
-            // TODO: 数组/字典中元素赋值
-            genCppCode(p, p->type, outfile); // LVal
+            (*outfile) << prefix;
+            genCppCode(p, p->type, outfile, prefix); // LVal
             (*outfile) << " = ";
             p = p->next->next;
-            genCppCode(p, p->type, outfile); // Exp
+            genCppCode(p, p->type, outfile, prefix); // Exp
+            (*outfile) << ";" << endl;
 		}
 		else if (p->type == "IFTK") {
-            // 'if' '(' Cond ')' Block ['else' Block]
-            (*outfile) << "if (";
-            p = p->next->next;
-            genCppCode(p, p->type, outfile); // Cond
-            (*outfile) << ") ";
-            p = p->next->next;
-            genCppCode(p, p->type, outfile); // Block
+            // 'if' Cond Block ['else' Block]
+            (*outfile) << prefix << "if (";
+            p = p->next;
+            genCppCode(p, p->type, outfile, prefix); // Cond
+            (*outfile) << ")" << endl;
+            p = p->next;
+            genCppCode(p, p->type, outfile, prefix); // Block
             p = p->next;
             if (p != nullptr && p->type == "ELSETK") {
-                (*outfile) << "else ";
+                (*outfile) << prefix << "else" << endl;
                 p = p->next;
-                genCppCode(p, p->type, outfile); // Block
+                genCppCode(p, p->type, outfile, prefix); // Block
             }
 		}
 		else if (p->type == "WHILETK") {
-            // 'while' '(' Cond ')' Block
-            (*outfile) << "while (";
-            p = p->next->next;
-            genCppCode(p, p->type, outfile); // Cond
-            (*outfile) << ") ";
-            p = p->next->next;
-            genCppCode(p, p->type, outfile); // Block
+            // 'while' Cond Block
+            (*outfile) << prefix << "while (";
+            p = p->next;
+            genCppCode(p, p->type, outfile, prefix); // Cond
+            (*outfile) << ")" << endl;
+            p = p->next;
+            genCppCode(p, p->type, outfile, prefix); // Block
 		}
 		else if (p->type == "BREAKTK") {
-            (*outfile) << "break";
+            (*outfile) << prefix << "break;" << endl;
 		}
 		else if (p->type == "CONTINUETK") {
-            (*outfile) << "continue";
+            (*outfile) << prefix << "continue;" << endl;
 		}
 		else if (p->type == "RETURNTK") {
-            (*outfile) << "return";
+            (*outfile) << prefix << "return";
             p = p->next;
             if (p != nullptr && p->type == "Exp") {
                 (*outfile) << " ";
-                genCppCode(p, p->type, outfile); // Exp
+                genCppCode(p, p->type, outfile, prefix); // Exp
             }
+            (*outfile) << ";" << endl;
 		}
         else if (p->type == "PRINTTK") {
             // 'print' '(' [Exp {',' Exp}] ')'
-            (*outfile) << "cout ";
+            (*outfile) << prefix << "cout ";
             p = p->next->next;
             if (p->type == "STRCON") {
-                (*outfile) << "<< \"" << p->s << "\"";
+                (*outfile) << "<< " << p->s << " ";
                 p = p->next;
             }
             else if (p->type == "Exp") {
                 (*outfile) << "<< ";
-                genCppCode(p, p->type, outfile);
+                genCppCode(p, p->type, outfile, prefix);
+                (*outfile) << " ";
                 p = p->next;
             }
             while (p != nullptr && p->type == "COMMA") {
-                (*outfile) << " << ";
                 p = p->next;
                 if (p->type == "STRCON") {
-                    (*outfile) << "<< \"" << p->s << "\"";
+                    (*outfile) << "<< " << p->s << " ";
                     p = p->next;
                 }
                 else if (p->type == "Exp") {
                     (*outfile) << "<< ";
-                    genCppCode(p, p->type, outfile); // Exp
+                    genCppCode(p, p->type, outfile, prefix); // Exp
+                    (*outfile) << " ";
                     p = p->next;
                 }
             }
-            (*outfile) << "<< endl";
+            (*outfile) << "<< endl;" << endl;
         }
 		else {
-			genCppCode(p, p->type, outfile); // Exp
+            (*outfile) << prefix;
+			genCppCode(p, p->type, outfile, prefix); // Exp
+            (*outfile) << ";" << endl;
 		}
     }
     else if (type == "Exp") { 
-        genCppCode(p, p->type, outfile); // AddExp
+        genCppCode(p, p->type, outfile, prefix); // AddExp
 	}
 	else if (type == "AddExp") {
-        genCppCode(p, p->type, outfile); // MulExp
+        genCppCode(p, p->type, outfile, prefix); // MulExp
         p = p->next;
         while (p != nullptr && (p->type == "PLUS" || p->type == "MINU")) {
             (*outfile) << " " << p->s << " ";
             p = p->next;
-            genCppCode(p, p->type, outfile); // MulExp
+            genCppCode(p, p->type, outfile, prefix); // MulExp
             p = p->next;
         }
 	}
     else if (type == "MulExp") { 
-        genCppCode(p, p->type, outfile); // UnaryExp
+        genCppCode(p, p->type, outfile, prefix); // UnaryExp
         p = p->next;
         while (p != nullptr && (p->type == "MULT" || p->type == "DIV" || p->type == "MOD")) {
             (*outfile) << " " << p->s << " ";
             p = p->next;
-            genCppCode(p, p->type, outfile); // UnaryExp
+            genCppCode(p, p->type, outfile, prefix); // UnaryExp
             p = p->next;
         }
 	}
@@ -242,41 +241,41 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile){
         if (p->type == "UnaryOp") {
             (*outfile) << cpp_unaryop(p->s);
             p = p->next;
-            genCppCode(p, p->type, outfile); // UnaryExp
+            genCppCode(p, p->type, outfile, prefix); // UnaryExp
         }
 		else if (p->type == "IDENFR" && p->next != nullptr && p->next->type == "LPARENT") {
             // 'IDENFR' '(' [FuncRParams] ')'
             (*outfile) << p->s << "(";
             p = p->next->next;
             if (p != nullptr && p->type == "FuncRParams") {
-                genCppCode(p, p->type, outfile); // FuncRParams
+                genCppCode(p, p->type, outfile, prefix); // FuncRParams
             }
             (*outfile) << ")";
 		}
 		else {
-            genCppCode(p, p->type, outfile); // PrimaryExp
+            genCppCode(p, p->type, outfile, prefix); // PrimaryExp
 		}
 	}
     else if (type == "PrimaryExp") {
 		if (p->type == "LPARENT") {
             (*outfile) << "(";
             p = p->next;
-            genCppCode(p, p->type, outfile); // Exp
+            genCppCode(p, p->type, outfile, prefix); // Exp
             (*outfile) << ")";
 		} else if (p->type == "INTCON") {
             (*outfile) << p->s;
 		} else {
-            genCppCode(p, p->type, outfile); // LVal
+            genCppCode(p, p->type, outfile, prefix); // LVal
 		}
 	}
     else if (type == "FuncRParams") {
         if (p->type == "Exp") {
-            genCppCode(p, p->type, outfile); // Exp
+            genCppCode(p, p->type, outfile, prefix); // Exp
             p = p->next;
             while (p != nullptr && p->type == "COMMA") {
                 (*outfile) << ", ";
                 p = p->next;
-                genCppCode(p, p->type, outfile); // Exp
+                genCppCode(p, p->type, outfile, prefix); // Exp
                 p = p->next;
             }
         }
@@ -290,52 +289,51 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile){
 		if (p != nullptr && p->type == "LBRACK") {
             p = p->next;
             (*outfile) << "[";
-            genCppCode(p, p->type, outfile); // Exp
+            genCppCode(p, p->type, outfile, prefix); // Exp
             (*outfile) << "]";
 		}
 	}
     else if (type == "Cond") {
-        genCppCode(p, p->type, outfile); // LOrExp
+        genCppCode(p, p->type, outfile, prefix); // LOrExp
 	}
 	else if (type == "LOrExp") {
-        genCppCode(p, p->type, outfile); // LAndExp
+        genCppCode(p, p->type, outfile, prefix); // LAndExp
         p = p->next;
         while (p != nullptr && p->type == "ORTK") {
             (*outfile) << " || ";
             p = p->next;
-            genCppCode(p, p->type, outfile); // LAndExp
+            genCppCode(p, p->type, outfile, prefix); // LAndExp
             p = p->next;
         }
 	}
 	else if (type == "LAndExp") { 
-        genCppCode(p, p->type, outfile); // EqExp
+        genCppCode(p, p->type, outfile, prefix); // EqExp
         p = p->next;
         while (p != nullptr && p->type == "ANDTK") {
             (*outfile) << " && ";
             p = p->next;
-            genCppCode(p, p->type, outfile); // EqExp
+            genCppCode(p, p->type, outfile, prefix); // EqExp
             p = p->next;
         }
 	}
 	else if (type == "EqExp") { 
-        genCppCode(p, p->type, outfile); // RelExp
+        genCppCode(p, p->type, outfile, prefix); // RelExp
         p = p->next;
         while (p != nullptr && (p->type == "EQL" || p->type == "NEQ")) {
             (*outfile) << " " << p->s << " ";
             p = p->next;
-            genCppCode(p, p->type, outfile); // RelExp
+            genCppCode(p, p->type, outfile, prefix); // RelExp
             p = p->next;
         }
 	}
 	else if (type == "RelExp") { 
-        genCppCode(p, p->type, outfile); // AddExp
+        genCppCode(p, p->type, outfile, prefix); // AddExp
         p = p->next;
         while (p != nullptr && (p->type == "GRE" || p->type == "LSS" || p->type == "GEQ" || p->type == "LEQ")) {
             (*outfile) << " " << p->s << " ";
             p = p->next;
-            genCppCode(p, p->type, outfile); // AddExp
+            genCppCode(p, p->type, outfile, prefix); // AddExp
             p = p->next;
         }
 	}
-    cout << "genCppCode " << type << " done" << endl;
 }

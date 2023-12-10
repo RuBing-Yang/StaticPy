@@ -15,11 +15,25 @@
   - 泛型
   - 类的方法的重载
 
-编译：
+## 运行
 
-```
+```bash
 g++ lex.cpp main.cpp grammar.cpp gencode.cpp -o compiler
+.\compiler.exe
+g++ files\cpp_file.cpp -o cpp_output
+.\cpp_output.exe
 ```
+
+运行效果：
+
+<img src="https://umeta.oss-cn-beijing.aliyuncs.com/wx_program/image-20231210235036412.png" alt="image-20231210235036412" width=80% />
+
+词法分析：
+
+<img src="C:%5CUsers%5Cyang%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20231210235137259.png" alt="image-20231210235137259" width=15% />
+
+语法树：
+
 
 
 ## 词法
@@ -48,10 +62,11 @@ g++ lex.cpp main.cpp grammar.cpp gencode.cpp -o compiler
 
 TODO:
   - 数据结构
-    - Dict声明写得有点问题
-    - LVal为List/Dict中元素赋值
+    - ~~Dict声明写得有点问题~~(Done)
+    - ~~LVal为List/Dict中元素赋值~~(Done)
+    - float数据类型
 - 代码生成：
-  - 输出c++代码
+  - ~~输出c++代码~~(Done)
 - 泛型
   - 参考[pep-0484](https://peps.python.org/pep-0484/#user-defined-generic-types)
 - 类

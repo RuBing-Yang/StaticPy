@@ -27,7 +27,7 @@ int main()
 	lex_file.open("files/lex_file.txt");
     grammar_file.open("files/grammar_file.txt");
     ast_file.open("files/ast_file.txt");
-    cpp_file.open("files/cpp_file.txt");
+    cpp_file.open("files/cpp_file.cpp");
 
     lexAnalysis(&in_file, &token, &lex_file);
     grammarAnalysis(&token, "CompUnit", root, &grammar_file);

@@ -191,15 +191,26 @@ void grammarAnalysis(TOKEN **token, string type, ASTNODE *root, ofstream *outfil
     }
     else if (type == "Stmt") {
 		if ((*token)->type == "IDENFR") {
-            // TODO: 数组/字典中元素赋值
-            p = creatNode(root, "", "LVal");
-            grammarAnalysis(token, "LVal", p, outfile);
-            if ((*token)->type == "ASSIGN") {
-                p = creatNode(root, (*token)->s, (*token)->type);
-                if (nextToken(&(*token), outfile)) return;
-            } 
-            p = creatNode(root, "", "Exp");
-            grammarAnalysis(token, "Exp", p, outfile);
+            TOKEN* tmp = (*token)->next;
+            bool isAssign = false;
+            if (tmp != nullptr && tmp->type == "ASSIGN") isAssign = true;
+            else if (tmp != nullptr && tmp->type == "LBRACK") {
+                while (tmp != nullptr && tmp->type != "RBRACK") tmp = tmp->next;
+                if (tmp != nullptr && tmp->next != nullptr && tmp->next->type == "ASSIGN") isAssign = true;
+            }
+            if (isAssign) {
+                p = creatNode(root, "", "LVal");
+                grammarAnalysis(token, "LVal", p, outfile);
+                if ((*token)->type == "ASSIGN") {
+                    p = creatNode(root, (*token)->s, (*token)->type);
+                    if (nextToken(&(*token), outfile)) return;
+                } 
+                p = creatNode(root, "", "Exp");
+                grammarAnalysis(token, "Exp", p, outfile);
+            } else {
+                p = creatNode(root, "", "Exp");
+                grammarAnalysis(token, "Exp", p, outfile);
+            }
 		}
 		else if ((*token)->type == "IFTK") {
 			p = creatNode(root, (*token)->s, (*token)->type);

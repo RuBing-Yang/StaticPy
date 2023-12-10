@@ -44,4 +44,4 @@ extern void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile=nullp
 
 extern void grammarAnalysis(TOKEN **token, string type, ASTNODE *root, ofstream *outfile=nullptr);
 
-extern void genCppCode(ASTNODE *root, string type, ofstream *outfile=nullptr);
+extern void genCppCode(ASTNODE *root, string type, ofstream *outfile=nullptr, string prefix="");
