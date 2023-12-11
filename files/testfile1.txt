@@ -1,10 +1,13 @@
 def add(a: int, b: int) -> int:
     return a + b
 
-def multiply_list(lst: List[int]) -> int:
-    result = 1
-    for num in lst:
-        result *= num
+def multiply_list(lst: List, len: int) -> int:
+    result: int = 1
+    i: int = 0
+    while i < len:
+        num: int = lst[i]
+        result = num * result
+        i = i + 1
     return result
 
 def factorial(n: int) -> int:
@@ -13,16 +16,16 @@ def factorial(n: int) -> int:
     else:
         return n * factorial(n - 1)
 
-def main() -> None:
+def main() -> int:
     x: int = 5
     y: int = 10
     z: int = add(x, y)
     print("Sum:", z)
 
-    numbers: List[int] = [1, 2, 3, 4, 5]
-    product: int = multiply_list(numbers)
+    numbers: List = [1, 2, 3, 4, 5]
+    product: int = multiply_list(numbers, 5)
     print("Product:", product)
 
     fact_result: int = factorial(4)
     print("Factorial:", fact_result)
-
+    return 0

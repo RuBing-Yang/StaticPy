@@ -18,8 +18,8 @@
 ## 运行
 
 ```bash
-g++ lex.cpp main.cpp grammar.cpp gencode.cpp -o compiler
-.\compiler.exe
+g++ main.cpp lex.cpp grammar.cpp gencode.cpp -o compiler
+.\compiler.exe "files/testfile.txt"
 g++ files\cpp_file.cpp -o cpp_output
 .\cpp_output.exe
 ```

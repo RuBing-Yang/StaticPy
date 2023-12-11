@@ -14,6 +14,7 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
         //cout << s << endl;
         line++;
         i = 0;
+        if (s.length() == 0) continue;
         int blank = 0;
         while (i < s.length() && s[i]==' ') {
             i++;
@@ -97,6 +98,8 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
                 else if(t=="Dict") q->type = "DICTTK";
                 else if(t=="True") q->type = "TRUETK";
                 else if(t=="False") q->type = "FALSETK";
+                else if(t=="and") q->type = "ANDTK";
+                else if(t=="or") q->type = "ORTK";
                 else q->type = "IDENFR";
             }
 

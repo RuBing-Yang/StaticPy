@@ -15,19 +15,21 @@ void printAST(const string prefix, const ASTNODE* node, ofstream *outfile, bool 
     }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
     ifstream in_file;
 	ofstream lex_file, grammar_file, ast_file, cpp_file;
+    string testfile_name = "files/testfile.txt";
 
     TOKEN *token=nullptr, *p;
     ASTNODE* root = new ASTNode("", "CompUnit");
 
-    in_file.open("files/testfile.txt");
-	lex_file.open("files/lex_file.txt");
-    grammar_file.open("files/grammar_file.txt");
-    ast_file.open("files/ast_file.txt");
-    cpp_file.open("files/cpp_file.cpp");
+    if (argc > 1) testfile_name = argv[1];
+    in_file.open(testfile_name);
+	lex_file.open("files/out/lex_file.txt");
+    grammar_file.open("files/out/grammar_file.txt");
+    ast_file.open("files/out/ast_file.txt");
+    cpp_file.open("files/out/cpp_file.cpp");
 
     lexAnalysis(&in_file, &token, &lex_file);
     grammarAnalysis(&token, "CompUnit", root, &grammar_file);
