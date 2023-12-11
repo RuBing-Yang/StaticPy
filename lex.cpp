@@ -100,6 +100,7 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
                 else if(t=="False") q->type = "FALSETK";
                 else if(t=="and") q->type = "ANDTK";
                 else if(t=="or") q->type = "ORTK";
+                else if(t=="TypeVar") q->type = "TYPEVARTK";
                 else q->type = "IDENFR";
             }
 

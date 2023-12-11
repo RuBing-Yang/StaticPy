@@ -1,0 +1,9 @@
+AnyVar = TypeVar("AnyVar")
+def func(l: List[AnyVar]) -> AnyVar:
+    return l[1]
+
+def main() -> int:
+    l: List[float] = [1.1, 2.2, 3.3]
+    v: float = func<float>(l)
+    print(v)
+    return 0

@@ -12,7 +12,7 @@
   - 类：不允许通过self.attr动态添加属性，只能在init函数里定义
 - 程序入口：由逐行执行改为从入口函数进入
 - 高级功能：
-  - 泛型
+  - 泛型：`AnyVar = TypeVar("AnyVar")`
   - 类的方法的重载
 
 ## 运行
@@ -40,21 +40,21 @@ g++ files\out\cpp_file.cpp -o cpp_output
 
 类别码
 
-| 单词名称   | 类别码     | 单词名称 | 类别码   | 单词名称 | 类别码 | 单词名称 | 类别码  |
-| ---------- | ---------- | -------- | -------- | -------- | ------ | -------- | ------- |
-| Ident      | IDENFR     | not      | NOTTK    | !        | NOT    | (        | LPARENT |
-| IntConst   | INTCON     | and      | ANDTK    | <        | LSS    | )        | RPARENT |
-| FloatConst | FLOATCON   | or       | ORTK     | <=       | LEQ    | [        | LBRACK  |
-| main       | MAINTK     | return   | RETURNTK | >        | GRE    | ]        | RBRACK  |
-| const      | CONSTTK    | None     | NONETK   | >=       | GEQ    | {        | LBRACE  |
-| int        | INTTK      | AddTab   | ADDTAB   | ==       | EQL    | }        | RBRACE  |
-| break      | BREAK      | DelTab   | DELTAB   | !=       | NEQ    | +        | PLUS    |
-| continue   | CONTINUETK | List     | LISTTK   | =        | ASSIGN | -        | MINU    |
-| if         | IFTK       | Dict     | DICTTK   | ,        | COMMA  | *        | MULT    |
-| else       | ELSETK     | False    | FALSETK  | :        | COLON  | /        | DIV     |
-| def        | DEFTK      | True     | TRUETK   | ->       | ARROW  | %        | MOD     |
-| class      | CLASSTK    |          |          |          |        |          |         |
-| while      | WHILETK    |          |          |          |        |          |         |
+| 单词名称   | 类别码     | 单词名称 | 类别码    | 单词名称 | 类别码 | 单词名称 | 类别码  |
+| ---------- | ---------- | -------- | --------- | -------- | ------ | -------- | ------- |
+| Ident      | IDENFR     | not      | NOTTK     | !        | NOT    | (        | LPARENT |
+| IntConst   | INTCON     | and      | ANDTK     | <        | LSS    | )        | RPARENT |
+| FloatConst | FLOATCON   | or       | ORTK      | <=       | LEQ    | [        | LBRACK  |
+| str        | STRCON     | return   | RETURNTK  | >        | GRE    | ]        | RBRACK  |
+| const      | CONSTTK    | None     | NONETK    | >=       | GEQ    | {        | LBRACE  |
+| int        | INTTK      | AddTab   | ADDTAB    | ==       | EQL    | }        | RBRACE  |
+| break      | BREAK      | DelTab   | DELTAB    | !=       | NEQ    | +        | PLUS    |
+| continue   | CONTINUETK | List     | LISTTK    | =        | ASSIGN | -        | MINU    |
+| if         | IFTK       | Dict     | DICTTK    | ,        | COMMA  | *        | MULT    |
+| else       | ELSETK     | False    | FALSETK   | :        | COLON  | /        | DIV     |
+| def        | DEFTK      | True     | TRUETK    | ->       | ARROW  | %        | MOD     |
+| class      | CLASSTK    | TypeVar  | TYPEVARTK |          |        |          |         |
+| while      | WHILETK    |          |           |          |        |          |         |
 
 
 
@@ -66,8 +66,8 @@ TODO:
   - 数据结构
     - ~~Dict声明写得有点问题~~(Done)
     - ~~LVal为List/Dict中元素赋值~~(Done)
-    - ~float数据类型~
-    - ~List/Dict的嵌套~
+    - ~~float数据类型~~
+    - ~~List/Dict的嵌套~~
 - 代码生成：
   - ~~输出c++代码~~(Done)
 - 泛型
@@ -77,16 +77,18 @@ TODO:
   - 方法重写
 
 ```python
-CompUnit ::= {ClassDef | FuncDef}
+CompUnit ::= { [GenericDefs] (ClassDef | FuncDef)}
+GenericDefs ::= {GenericDef}
+GenericDef ::= Ident '=' 'TypeVar' '(' Str ')'
 FuncDef ::= TypeVar 'def' Ident '(' [FuncFParams] ')' '->' FuncType Block
 FuncType ::= 'None' | DataType
-DataType ::= 'int' | 'float' | 'List' '[' DataType ']' | 'Dict' '[' DataType ',' DataType ']'
+DataType ::= 'int' | 'float' | 'List' '[' DataType ']' | 'Dict' '[' DataType ',' DataType ']' | Ident
 Block ::= ':' 'AddTab' {BlockItem} 'DelTab'
 BlockItem ::= Decl | Stmt
 Decl ::= Ident ':' DataType ['=' InitVal]  #静态类型检查
 InitVal ::= Exp
     | '[' [InitVal {',' InitVal}] ']' 
-    | '{' [InitVal {',' InitVal}] '}'
+    | '{' [InitVal ':' InitVal {',' InitVal ':' InitVal}] '}'
 FuncFParams ::= FuncFParam {',' FuncFParam}
 FuncFParam ::= Ident ':' DataType
 Stmt ::= Exp
@@ -99,7 +101,10 @@ Stmt ::= Exp
 Exp ::= LOrExp
 AddExp ::= MulExp { ('+' | '−') MulExp }
 MulExp ::= UnaryExp { ('*' | '/' | '%') UnaryExp }
-UnaryExp ::= PrimaryExp | Ident '(' [FuncRParams] ')' | ('+' | '−' | 'not') UnaryExp
+UnaryExp ::= PrimaryExp
+  | Ident [GenericReal] '(' [FuncRParams] ')'
+  | ('+' | '−' | 'not') UnaryExp
+GenericReal ::= '<' DataType {',' DataType} '>'
 PrimaryExp ::= '(' Exp ')' | LVal | IntConst | FloatConst
 FuncRParams ::= Exp { ',' Exp }
 LVal ::= Ident {'[' Exp ']'} 
