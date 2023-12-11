@@ -2,9 +2,10 @@
 #include <fstream>
 #include <string.h>
 #include <string>
-#include<stdio.h>
-#include<malloc.h>
+#include <stdio.h>
+#include <malloc.h>
 #include <map>
+#include <vector>
 
 using namespace std;
 
@@ -29,8 +30,9 @@ int main() {
         {3, 30},
         {4, 40},
     };
-    vector<int> vinitlist {1, 2, 3, 4, 5};
     for (auto it = minitlist.begin(); it != minitlist.end(); it++) {
         printf("map[%d] = %d\n", it->first, it->second);
     }
+    vector<int> vinitlist {1, 2, 3, 4, 5};
+    vector<vector<int>> vvinitlist {{1, 2}, {3, 4, 5}};
 }

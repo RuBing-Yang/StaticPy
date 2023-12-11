@@ -1,7 +1,7 @@
 def add(a: int, b: int) -> int:
     return a + b
 
-def multiply_list(lst: List, len: int) -> int:
+def multiply_list(lst: List[int], len: int) -> int:
     result: int = 1
     i: int = 0
     while i < len:
@@ -22,7 +22,7 @@ def main() -> int:
     z: int = add(x, y)
     print("Sum:", z)
 
-    numbers: List = [1, 2, 3, 4, 5]
+    numbers: List[int] = [1, 2, 3, 4, 5]
     product: int = multiply_list(numbers, 5)
     print("Product:", product)
 

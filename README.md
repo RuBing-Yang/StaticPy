@@ -9,7 +9,7 @@
 - 静态类型：
   - 在使用变量前声明采用[Type Hint](https://www.python.org/dev/peps/pep-0484/)：`x:int = 1`
   - 函数：`def funcname(para: para_type) -> return_type:`
-  - 类：（还没写 没想好）
+  - 类：不允许通过self.attr动态添加属性，只能在init函数里定义
 - 程序入口：由逐行执行改为从入口函数进入
 - 高级功能：
   - 泛型
@@ -17,10 +17,10 @@
 
 ## 运行
 
-```bash
+```
 g++ main.cpp lex.cpp grammar.cpp gencode.cpp -o compiler
-.\compiler.exe "files/testfile.txt"
-g++ files\cpp_file.cpp -o cpp_output
+.\compiler.exe "files/test_stl.py"
+g++ files\out\cpp_file.cpp -o cpp_output
 .\cpp_output.exe
 ```
 
@@ -61,10 +61,13 @@ g++ files\cpp_file.cpp -o cpp_output
 ## 文法
 
 TODO:
+  - 语法结构
+    - for循环：`for iter:type in container:`
   - 数据结构
     - ~~Dict声明写得有点问题~~(Done)
     - ~~LVal为List/Dict中元素赋值~~(Done)
-    - float数据类型
+    - ~float数据类型~
+    - ~List/Dict的嵌套~
 - 代码生成：
   - ~~输出c++代码~~(Done)
 - 泛型
@@ -73,16 +76,17 @@ TODO:
   - self的使用
   - 方法重写
 
-```pseudocode
-CompUnit ::= {FuncDef}
-InitVal ::= Exp
-    | '[' [InitVal {',' InitVal}] ']' 
-    | '{' [InitVal {',' InitVal}] '}'
-FuncDef ::= 'def' Ident '(' [FuncFParams] ')' '->' ('None' | DataType) Block
-DataType ::= 'int' | 'List' | 'Dict'
+```python
+CompUnit ::= {ClassDef | FuncDef}
+FuncDef ::= TypeVar 'def' Ident '(' [FuncFParams] ')' '->' FuncType Block
+FuncType ::= 'None' | DataType
+DataType ::= 'int' | 'float' | 'List' '[' DataType ']' | 'Dict' '[' DataType ',' DataType ']'
 Block ::= ':' 'AddTab' {BlockItem} 'DelTab'
 BlockItem ::= Decl | Stmt
 Decl ::= Ident ':' DataType ['=' InitVal]  #静态类型检查
+InitVal ::= Exp
+    | '[' [InitVal {',' InitVal}] ']' 
+    | '{' [InitVal {',' InitVal}] '}'
 FuncFParams ::= FuncFParam {',' FuncFParam}
 FuncFParam ::= Ident ':' DataType
 Stmt ::= Exp
@@ -92,14 +96,13 @@ Stmt ::= Exp
     | 'break' | 'continue'
     | 'return' [Exp]  #返回值类型检查
     | 'print' '(' [(Str | Exp) {',' (Str | Exp)}] ')'
-Exp ::= AddExp
+Exp ::= LOrExp
 AddExp ::= MulExp { ('+' | '−') MulExp }
 MulExp ::= UnaryExp { ('*' | '/' | '%') UnaryExp }
 UnaryExp ::= PrimaryExp | Ident '(' [FuncRParams] ')' | ('+' | '−' | 'not') UnaryExp
-PrimaryExp ::= '(' Exp ')' | LVal | Number
-FuncRParams → Exp { ',' Exp }
+PrimaryExp ::= '(' Exp ')' | LVal | IntConst | FloatConst
+FuncRParams ::= Exp { ',' Exp }
 LVal ::= Ident {'[' Exp ']'} 
-Cond ::= LOrExp
 LOrExp ::= LAndExp { 'or' LAndExp }
 LAndExp ::= EqExp { 'and' EqExp }
 EqExp ::= RelExp { ('==' | '!=') RelExp }

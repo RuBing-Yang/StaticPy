@@ -2,9 +2,10 @@
 
 string cpp_datatype(string type) {
     if (type == "INTTK") return "int";
+    if (type == "FLOATTK") return "float";
     if (type == "NONETK") return "void";
-    if (type == "LISTTK") return "vector<int>";
-    if (type == "DICTTK") return "map<int, int>";
+    // if (type == "LISTTK") return "vector<int>";
+    // if (type == "DICTTK") return "map<int, int>";
     return "";
 }
 
@@ -31,21 +32,48 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
     }
     else if (type == "FuncDef") {
         // 'def' Ident '(' [FuncFParams] ')' '->' FuncType Block
-        while (p->type != "ARROW") p = p->next;
-        string func_type = cpp_datatype(p->next->type);
-
+        while (p->type != "FuncType") p = p->next;
+        genCppCode(p, p->type, outfile, prefix);
         p = root->first_child->next;
         string func_name = p->s;
-        (*outfile) << func_type << " " << func_name << "(";
-
+        (*outfile) << " " << func_name << "(";
         p = p->next->next;
         if (p->type == "FuncFParams") {
             genCppCode(p, p->type, outfile, prefix);
         }
         (*outfile) << ")" << endl;
-
         while (p->type != "Block") p = p->next;
 		genCppCode(p, p->type, outfile, prefix);
+    }
+    else if (type == "FuncType") {
+        if (p->type == "NONETK") {
+            (*outfile) << "void";
+        }
+        else {  // DataType
+            genCppCode(p, p->type, outfile, prefix);
+        }
+    }
+    else if (type == "DataType") {
+        if (p->type == "LISTTK") {
+            // 'List' '[' DataType ']'
+            (*outfile) << "vector<";
+            p = p->next->next;
+            genCppCode(p, p->type, outfile, prefix);  // DataType
+            (*outfile) << ">";
+        }
+        else if (p->type == "DICTTK") {
+            // 'Dict' '[' DataType ',' DataType ']'
+            (*outfile) << "map<";
+            p = p->next->next;
+            genCppCode(p, p->type, outfile, prefix);  // DataType
+            (*outfile) << ",";
+            p = p->next->next;
+            genCppCode(p, p->type, outfile, prefix);  // DataType
+            (*outfile) << ">";
+        }
+        else {
+            (*outfile) << cpp_datatype(p->type);
+        }
     }
     else if (type == "Block") {
         (*outfile) << prefix << "{" << endl;
@@ -61,9 +89,14 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
         genCppCode(p, p->type, outfile, prefix);
     }
     else if (type == "Decl") {
-        string datatype = cpp_datatype(p->next->next->type);
-        (*outfile) << prefix << datatype << " " << p->s;
-        p = p->next->next->next;
+        // Decl ::= Ident ':' DataType ['=' InitVal]
+        (*outfile) << prefix;
+        while (p->type != "DataType") p = p->next;
+        genCppCode(p, p->type, outfile, prefix);
+        p = root->first_child;
+        (*outfile) << " " << p->s;
+        while (p->type != "DataType") p = p->next;
+        p = p->next;
         if (p != nullptr && p->type == "ASSIGN") {
             (*outfile) << " = ";
             p = p->next;
@@ -129,7 +162,10 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
     }
     else if (type == "FuncFParam") {
         // Ident ':' DataType
-        (*outfile) << cpp_datatype(p->next->next->type) << " " << p->s;
+        p = p->next->next;  // DataType
+        genCppCode(p, p->type, outfile, prefix);
+        p = root->first_child;
+        (*outfile) << " " << p->s;
     }
     else if (type == "Stmt") {
 		if (p->type == "LVal") {
@@ -141,10 +177,10 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
             (*outfile) << ";" << endl;
 		}
 		else if (p->type == "IFTK") {
-            // 'if' Cond Block ['else' Block]
+            // 'if' Exp Block ['else' Block]
             (*outfile) << prefix << "if (";
             p = p->next;
-            genCppCode(p, p->type, outfile, prefix); // Cond
+            genCppCode(p, p->type, outfile, prefix); // Exp
             (*outfile) << ")" << endl;
             p = p->next;
             genCppCode(p, p->type, outfile, prefix); // Block
@@ -156,10 +192,10 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
             }
 		}
 		else if (p->type == "WHILETK") {
-            // 'while' Cond Block
+            // 'while' Exp Block
             (*outfile) << prefix << "while (";
             p = p->next;
-            genCppCode(p, p->type, outfile, prefix); // Cond
+            genCppCode(p, p->type, outfile, prefix); // Exp
             (*outfile) << ")" << endl;
             p = p->next;
             genCppCode(p, p->type, outfile, prefix); // Block
@@ -215,7 +251,7 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
 		}
     }
     else if (type == "Exp") { 
-        genCppCode(p, p->type, outfile, prefix); // AddExp
+        genCppCode(p, p->type, outfile, prefix); // LOrExp
 	}
 	else if (type == "AddExp") {
         genCppCode(p, p->type, outfile, prefix); // MulExp
@@ -262,7 +298,7 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
             p = p->next;
             genCppCode(p, p->type, outfile, prefix); // Exp
             (*outfile) << ")";
-		} else if (p->type == "INTCON") {
+		} else if (p->type == "INTCON" || p->type == "FLOATCON") {
             (*outfile) << p->s;
 		} else {
             genCppCode(p, p->type, outfile, prefix); // LVal
@@ -286,15 +322,13 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
             p = p->next;
 		}
         // IDENFR '[' Exp ']'
-		if (p != nullptr && p->type == "LBRACK") {
+		while (p != nullptr && p->type == "LBRACK") {
             p = p->next;
             (*outfile) << "[";
             genCppCode(p, p->type, outfile, prefix); // Exp
             (*outfile) << "]";
+            p = p->next->next;
 		}
-	}
-    else if (type == "Cond") {
-        genCppCode(p, p->type, outfile, prefix); // LOrExp
 	}
 	else if (type == "LOrExp") {
         genCppCode(p, p->type, outfile, prefix); // LAndExp
