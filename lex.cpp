@@ -101,6 +101,8 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
                 else if(t=="and") q->type = "ANDTK";
                 else if(t=="or") q->type = "ORTK";
                 else if(t=="TypeVar") q->type = "TYPEVARTK";
+                else if(t=="class") q->type = "CLASSTK";
+                else if(t=="self") q->type = "SELFTK";
                 else q->type = "IDENFR";
             }
 
@@ -185,6 +187,10 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
             }
             else if (s[i]==',') {
                 q = new Token(",", "COMMA");
+                i++;
+            }
+            else if (s[i]=='.') {
+                q = new Token(".", "DOT");
                 i++;
             }
             else if (s[i]=='(') {

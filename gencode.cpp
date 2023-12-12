@@ -25,7 +25,7 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
         (*outfile) << "#include <vector>" << endl;
         (*outfile) << "using namespace std;" << endl;
         while (p != nullptr) {
-            (*outfile) << endl;
+            (*outfile) << endl << prefix;
             genCppCode(p, p->type, outfile, prefix);
             p = p->next;
         }
@@ -48,6 +48,42 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
         // Ident '=' 'TypeVar' '(' Str ')'
         (*outfile) << p->s;
     }
+	else if (type == "ClassDef") {
+        // 'class' Ident ':' 'AddTab' {ClassAttrDef} {ClassFuncDef} 'DelTab'
+        p = p->next;
+        (*outfile) << "class " << p->s;
+        p = p->next->next->next;
+        while (p != nullptr && p->type == "ClassAttrDef") {
+            genCppCode(p, p->type, outfile, prefix + "    ");
+            p = p->next;
+        }
+        while (p != nullptr && p->type == "ClassFuncDef") {
+            genCppCode(p, p->type, outfile, prefix + "    ");
+            p = p->next;
+        }
+	}
+	else if (type == "ClassAttrDef") {
+        (*outfile) << prefix;
+        while (p->type != "DataType") p = p->next;
+        genCppCode(p, p->type, outfile, prefix);
+        p = root->first_child;
+        (*outfile) << " " << p->s << endl;
+	}
+	else if (type == "ClassFuncDef") {
+        // 'def' Ident '(' 'self' [',' FuncFParams] ')' '->' FuncType Block
+        while (p->type != "FuncType") p = p->next;
+        genCppCode(p, p->type, outfile, prefix);
+        p = root->first_child->next;
+        string func_name = p->s;
+        (*outfile) << " " << func_name << "(";
+        p = p->next->next->next;
+        if (p->type == "FuncFParams") {
+            genCppCode(p, p->type, outfile, prefix);
+        }
+        (*outfile) << ")" << endl;
+        while (p->type != "Block") p = p->next;
+		genCppCode(p, p->type, outfile, prefix);
+	}
     else if (type == "FuncDef") {
         // 'def' Ident '(' [FuncFParams] ')' '->' FuncType Block
         while (p->type != "FuncType") p = p->next;
@@ -300,25 +336,31 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
             p = p->next;
             genCppCode(p, p->type, outfile, prefix); // UnaryExp
         }
-		else if (p->type == "IDENFR" && p->next != nullptr && (p->next->type == "LPARENT" || p->next->type == "GenericReal")) {
-            // Ident [GenericReal] '(' [FuncRParams] ')'
-            (*outfile) << p->s;
-            p = p->next;
-            if (p->type == "GenericReal") {
-                genCppCode(p, p->type, outfile, prefix);
-            }
-            while (p != nullptr && p->type != "LPARENT") p = p->next;
-            p = p->next;
-            (*outfile) << "(";
-            if (p != nullptr && p->type == "FuncRParams") {
-                genCppCode(p, p->type, outfile, prefix); // FuncRParams
-            }
-            (*outfile) << ")";
+		else if (p->type == "IdentExp") {
+            genCppCode(p, p->type, outfile, prefix);
 		}
 		else {
-            genCppCode(p, p->type, outfile, prefix); // PrimaryExp
+            genCppCode(p, p->type, outfile, prefix);  // PrimaryExp
 		}
 	}
+    else if (type == "IdentExp") {
+        // LVal [[GenericReal] '(' [FuncRParams] ')']
+        genCppCode(p, p->type, outfile, prefix); // LVal
+        p = p->next;
+        if (p->type == "GenericReal") {
+            genCppCode(p, p->type, outfile, prefix);
+            p = p->next;
+        }
+        if (p->type == "LPARENT") {
+            (*outfile) << "(";
+            p = p->next;
+            if (p->type == "FuncRParams") {
+                genCppCode(p, p->type, outfile, prefix);  // FuncRParams
+            }
+            (*outfile) << ")";
+        }
+        
+    }
     else if (type == "GenericReal") {
         // '<' DataType {',' DataType} '>'
         (*outfile) << "<";
@@ -339,10 +381,8 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
             p = p->next;
             genCppCode(p, p->type, outfile, prefix); // Exp
             (*outfile) << ")";
-		} else if (p->type == "INTCON" || p->type == "FLOATCON") {
+		} else {  // INTCON | FLOATCON
             (*outfile) << p->s;
-		} else {
-            genCppCode(p, p->type, outfile, prefix); // LVal
 		}
 	}
     else if (type == "FuncRParams") {
@@ -358,11 +398,15 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
         }
 	}
     else if (type == "LVal") {
-		if (p->type == "IDENFR") {
-			(*outfile) << p->s;
+        // ['self' '.' ] Ident {'[' Exp ']'} {'.' Ident {'[' Exp ']'}}
+        if (p->type == "SELFTK") {
             p = p->next;
-		}
-        // IDENFR '[' Exp ']'
+            if (p->type == "DOT") {
+                p = p->next;
+            }
+        }
+        (*outfile) << p->s;
+        p = p->next;
 		while (p != nullptr && p->type == "LBRACK") {
             p = p->next;
             (*outfile) << "[";
@@ -370,6 +414,18 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
             (*outfile) << "]";
             p = p->next->next;
 		}
+        while (p != nullptr && p->type == "DOT") {
+            p = p->next;
+            (*outfile) << "." << p->s;
+            p = p->next;
+            while (p != nullptr && p->type == "LBRACK") {
+                p = p->next;
+                (*outfile) << "[";
+                genCppCode(p, p->type, outfile, prefix); // Exp
+                (*outfile) << "]";
+                p = p->next->next;
+            }
+        }
 	}
 	else if (type == "LOrExp") {
         genCppCode(p, p->type, outfile, prefix); // LAndExp

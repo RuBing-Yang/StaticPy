@@ -19,7 +19,7 @@
 
 ```
 g++ main.cpp lex.cpp grammar.cpp gencode.cpp -o compiler
-.\compiler.exe "files/test_stl.py"
+.\compiler.exe "files/test_class.txt"
 g++ files\out\cpp_file.cpp -o cpp_output
 .\cpp_output.exe
 ```
@@ -53,8 +53,8 @@ g++ files\out\cpp_file.cpp -o cpp_output
 | if         | IFTK       | Dict     | DICTTK    | ,        | COMMA  | *        | MULT    |
 | else       | ELSETK     | False    | FALSETK   | :        | COLON  | /        | DIV     |
 | def        | DEFTK      | True     | TRUETK    | ->       | ARROW  | %        | MOD     |
-| class      | CLASSTK    | TypeVar  | TYPEVARTK |          |        |          |         |
-| while      | WHILETK    |          |           |          |        |          |         |
+| class      | CLASSTK    | TypeVar  | TYPEVARTK | .        | DOT    |          |         |
+| while      | WHILETK    | self     | SELFTK    |          |        |          |         |
 
 
 
@@ -80,9 +80,15 @@ TODO:
 CompUnit ::= { [GenericDefs] (ClassDef | FuncDef)}
 GenericDefs ::= {GenericDef}
 GenericDef ::= Ident '=' 'TypeVar' '(' Str ')'
-FuncDef ::= TypeVar 'def' Ident '(' [FuncFParams] ')' '->' FuncType Block
+ClassDef ::= 'class' Ident ':' 'AddTab' {ClassAttrDef} {ClassFuncDef} 'DelTab'
+ClassAttrDef ::= Ident ':' DataType
+ClassFuncDef ::= 'def' Ident '(' 'self' [',' FuncFParams] ')' '->' FuncType Block
+FuncDef ::= 'def' Ident '(' [FuncFParams] ')' '->' FuncType Block
 FuncType ::= 'None' | DataType
-DataType ::= 'int' | 'float' | 'List' '[' DataType ']' | 'Dict' '[' DataType ',' DataType ']' | Ident
+DataType ::= 'int' | 'float'
+    | 'List' '[' DataType ']'
+    | 'Dict' '[' DataType ',' DataType ']'
+    | Ident  #泛型或者类
 Block ::= ':' 'AddTab' {BlockItem} 'DelTab'
 BlockItem ::= Decl | Stmt
 Decl ::= Ident ':' DataType ['=' InitVal]  #静态类型检查
@@ -101,13 +107,12 @@ Stmt ::= Exp
 Exp ::= LOrExp
 AddExp ::= MulExp { ('+' | '−') MulExp }
 MulExp ::= UnaryExp { ('*' | '/' | '%') UnaryExp }
-UnaryExp ::= PrimaryExp
-  | Ident [GenericReal] '(' [FuncRParams] ')'
-  | ('+' | '−' | 'not') UnaryExp
+UnaryExp ::= IdentExp | PrimaryExp | ('+' | '−' | 'not') UnaryExp
+IdentExp ：：= LVal [[GenericReal] '(' [FuncRParams] ')'] #函数或类的init
 GenericReal ::= '<' DataType {',' DataType} '>'
-PrimaryExp ::= '(' Exp ')' | LVal | IntConst | FloatConst
+PrimaryExp ::= '(' Exp ')' | IntConst | FloatConst
 FuncRParams ::= Exp { ',' Exp }
-LVal ::= Ident {'[' Exp ']'} 
+LVal ::= ['self' '.' ] Ident {'[' Exp ']'} {'.' Ident {'[' Exp ']'}}
 LOrExp ::= LAndExp { 'or' LAndExp }
 LAndExp ::= EqExp { 'and' EqExp }
 EqExp ::= RelExp { ('==' | '!=') RelExp }
