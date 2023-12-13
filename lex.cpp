@@ -8,10 +8,8 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
     int last_tab = 0;
     string s, t;
     TOKEN *start=nullptr, *p, *q;
-    //cout << "lex start" << endl;
 
     while (getline(*infile, s)) {
-        //cout << s << endl;
         line++;
         i = 0;
         if (s.length() == 0) continue;
@@ -103,6 +101,7 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
                 else if(t=="TypeVar") q->type = "TYPEVARTK";
                 else if(t=="class") q->type = "CLASSTK";
                 else if(t=="self") q->type = "SELFTK";
+                else if(t=="init") q->type = "INITTK";
                 else q->type = "IDENFR";
             }
 
@@ -244,5 +243,4 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
             p = p->next;
         }
     }
-    //cout << "lex end" << endl;
 }

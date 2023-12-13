@@ -1,14 +1,15 @@
 class Position:
     x : int
     y : int
-    def Position(self, x1 : int, y1 : int) -> int:
+    def init(x1 : int, y1 : int):
         self.x = x1
         self.y = y1
     def getPosList() -> List[int]:
         l : List[int] = [x, y]
+        return l
 
 def main() -> int:
     p : Position = Position(1, 2)
     l : List[int] = p.getPosList()
-    print(l[0], l[1])
+    print("pos=<", l[0], ", ", l[1], ">")
     return 0

@@ -49,34 +49,53 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
         (*outfile) << p->s;
     }
 	else if (type == "ClassDef") {
-        // 'class' Ident ':' 'AddTab' {ClassAttrDef} {ClassFuncDef} 'DelTab'
+        // 'class' Ident ':' 'AddTab' {ClassAttrDef} [ClassInitDef] {ClassFuncDef} 'DelTab'
         p = p->next;
-        (*outfile) << "class " << p->s;
+        string class_name = p->s;
+        (*outfile) << "class " << class_name << endl << "{" << endl;
         p = p->next->next->next;
+        (*outfile) << prefix << "    " << "public:" << endl;
         while (p != nullptr && p->type == "ClassAttrDef") {
-            genCppCode(p, p->type, outfile, prefix + "    ");
+            genCppCode(p, p->type, outfile, prefix + "        ");
+            p = p->next;
+        }
+        if (p != nullptr && p->type == "ClassInitDef") {
+            (*outfile) << prefix << "        " << class_name;
+            genCppCode(p, p->type, outfile, prefix + "        ");
             p = p->next;
         }
         while (p != nullptr && p->type == "ClassFuncDef") {
-            genCppCode(p, p->type, outfile, prefix + "    ");
+            genCppCode(p, p->type, outfile, prefix + "        ");
             p = p->next;
         }
+        (*outfile) << prefix << "};" << endl;
 	}
 	else if (type == "ClassAttrDef") {
         (*outfile) << prefix;
         while (p->type != "DataType") p = p->next;
         genCppCode(p, p->type, outfile, prefix);
         p = root->first_child;
-        (*outfile) << " " << p->s << endl;
+        (*outfile) << " " << p->s << ";" << endl;
+	}
+	else if (type == "ClassInitDef") {
+		// 'def' 'init' '(' [FuncFParams] ')' Block
+        (*outfile) << "(";
+        p = p->next->next->next;
+        if (p->type == "FuncFParams") {
+            genCppCode(p, p->type, outfile, prefix);
+        }
+        (*outfile) << ")" << endl;
+        while (p->type != "Block") p = p->next;
+		genCppCode(p, p->type, outfile, prefix);
 	}
 	else if (type == "ClassFuncDef") {
         // 'def' Ident '(' 'self' [',' FuncFParams] ')' '->' FuncType Block
+        (*outfile) << prefix;
         while (p->type != "FuncType") p = p->next;
         genCppCode(p, p->type, outfile, prefix);
         p = root->first_child->next;
-        string func_name = p->s;
-        (*outfile) << " " << func_name << "(";
-        p = p->next->next->next;
+        (*outfile) << " " << p->s << "(";
+        p = p->next->next->next->next;
         if (p->type == "FuncFParams") {
             genCppCode(p, p->type, outfile, prefix);
         }
@@ -89,8 +108,7 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
         while (p->type != "FuncType") p = p->next;
         genCppCode(p, p->type, outfile, prefix);
         p = root->first_child->next;
-        string func_name = p->s;
-        (*outfile) << " " << func_name << "(";
+        (*outfile) << " " << p->s << "(";
         p = p->next->next;
         if (p->type == "FuncFParams") {
             genCppCode(p, p->type, outfile, prefix);
@@ -307,8 +325,9 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
             (*outfile) << ";" << endl;
 		}
     }
-    else if (type == "Exp") { 
+    else if (type == "Exp") {
         genCppCode(p, p->type, outfile, prefix); // LOrExp
+
 	}
 	else if (type == "AddExp") {
         genCppCode(p, p->type, outfile, prefix); // MulExp
@@ -347,11 +366,11 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
         // LVal [[GenericReal] '(' [FuncRParams] ')']
         genCppCode(p, p->type, outfile, prefix); // LVal
         p = p->next;
-        if (p->type == "GenericReal") {
+        if (p != nullptr && p->type == "GenericReal") {
             genCppCode(p, p->type, outfile, prefix);
             p = p->next;
         }
-        if (p->type == "LPARENT") {
+        if (p != nullptr && p->type == "LPARENT") {
             (*outfile) << "(";
             p = p->next;
             if (p->type == "FuncRParams") {
@@ -359,7 +378,6 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
             }
             (*outfile) << ")";
         }
-        
     }
     else if (type == "GenericReal") {
         // '<' DataType {',' DataType} '>'

@@ -30,7 +30,7 @@ g++ files\out\cpp_file.cpp -o cpp_output
 
 词法分析：
 
-<img src="C:%5CUsers%5Cyang%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20231210235137259.png" alt="image-20231210235137259" width=15% />
+<img src="https://umeta.oss-cn-beijing.aliyuncs.com/wx_program/image-20231210235137259.png" alt="image-20231210235137259" width=15% />
 
 语法树：
 
@@ -55,6 +55,7 @@ g++ files\out\cpp_file.cpp -o cpp_output
 | def        | DEFTK      | True     | TRUETK    | ->       | ARROW  | %        | MOD     |
 | class      | CLASSTK    | TypeVar  | TYPEVARTK | .        | DOT    |          |         |
 | while      | WHILETK    | self     | SELFTK    |          |        |          |         |
+| init       | INITTK     |          |           |          |        |          |         |
 
 
 
@@ -68,20 +69,22 @@ TODO:
     - ~~LVal为List/Dict中元素赋值~~(Done)
     - ~~float数据类型~~
     - ~~List/Dict的嵌套~~
+    - list的insert和append和size
 - 代码生成：
   - ~~输出c++代码~~(Done)
 - 泛型
-  - 参考[pep-0484](https://peps.python.org/pep-0484/#user-defined-generic-types)
+  - ~~参考[pep-0484](https://peps.python.org/pep-0484/#user-defined-generic-types)~~
 - 类
-  - self的使用
-  - 方法重写
+  - ~~self的使用~~
+  - ~~方法重写~~
 
 ```python
 CompUnit ::= { [GenericDefs] (ClassDef | FuncDef)}
 GenericDefs ::= {GenericDef}
 GenericDef ::= Ident '=' 'TypeVar' '(' Str ')'
-ClassDef ::= 'class' Ident ':' 'AddTab' {ClassAttrDef} {ClassFuncDef} 'DelTab'
+ClassDef ::= 'class' Ident ':' 'AddTab' {ClassAttrDef} [ClassInitDef] {ClassFuncDef} 'DelTab'
 ClassAttrDef ::= Ident ':' DataType
+ClassInitDef ::= 'def' 'init' '(' [FuncFParams] ')' Block
 ClassFuncDef ::= 'def' Ident '(' 'self' [',' FuncFParams] ')' '->' FuncType Block
 FuncDef ::= 'def' Ident '(' [FuncFParams] ')' '->' FuncType Block
 FuncType ::= 'None' | DataType
