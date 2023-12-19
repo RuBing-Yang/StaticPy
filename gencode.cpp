@@ -402,8 +402,10 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
             p = p->next;
             genCppCode(p, p->type, outfile, prefix); // Exp
             (*outfile) << ")";
-		} else {  // INTCON | FLOATCON
-            (*outfile) << p->s;
+		} else {  // INTCON | FLOATCON | StrConst | 'True' | 'False'
+            if (p->type == "TRUETK") (*outfile) << "true";
+            else if (p->type == "FALSETK") (*outfile) << "false";
+            else (*outfile) << p->s;
 		}
 	}
     else if (type == "FuncRParams") {

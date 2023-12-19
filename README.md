@@ -45,7 +45,7 @@ g++ files\out\cpp_file.cpp -o cpp_output
 | Ident      | IDENFR     | not      | NOTTK     | !        | NOT    | (        | LPARENT |
 | IntConst   | INTCON     | and      | ANDTK     | <        | LSS    | )        | RPARENT |
 | FloatConst | FLOATCON   | or       | ORTK      | <=       | LEQ    | [        | LBRACK  |
-| string     | STRCON     | return   | RETURNTK  | >        | GRE    | ]        | RBRACK  |
+| StrConst   | STRCON     | return   | RETURNTK  | >        | GRE    | ]        | RBRACK  |
 | const      | CONSTTK    | None     | NONETK    | >=       | GEQ    | {        | LBRACE  |
 | int        | INTTK      | AddTab   | ADDTAB    | ==       | EQL    | }        | RBRACE  |
 | break      | BREAK      | DelTab   | DELTAB    | !=       | NEQ    | +        | PLUS    |
@@ -57,6 +57,7 @@ g++ files\out\cpp_file.cpp -o cpp_output
 | while      | WHILETK    | self     | SELFTK    |          |        |          |         |
 | init       | INITTK     | bool     | BOOLTK    |          |        |          |         |
 | long       | LONGTTK    | str      | STRTK     |          |        |          |         |
+| append     | APPENDTK   |          |           |          |        |          |         |
 
 
 
@@ -70,7 +71,7 @@ TODO:
     - ~~LVal为List/Dict中元素赋值~~(Done)
     - ~~float数据类型~~
     - ~~List/Dict的嵌套~~
-    - list的insert和append和size
+    - list的append
 - 代码生成：
   - ~~输出c++代码~~(Done)
 - 泛型
@@ -108,13 +109,14 @@ Stmt ::= Exp
     | 'break' | 'continue'
     | 'return' [Exp]  #返回值类型检查
     | 'print' '(' [(Str | Exp) {',' (Str | Exp)}] ')'
+    | LVal '.' 'append' '(' Exp ')'
 Exp ::= LOrExp
 AddExp ::= MulExp { ('+' | '−') MulExp }
 MulExp ::= UnaryExp { ('*' | '/' | '%') UnaryExp }
 UnaryExp ::= IdentExp | PrimaryExp | ('+' | '−' | 'not') UnaryExp
 IdentExp ：：= LVal [[GenericReal] '(' [FuncRParams] ')'] #函数或类的init
 GenericReal ::= '<' DataType {',' DataType} '>'
-PrimaryExp ::= '(' Exp ')' | IntConst | FloatConst
+PrimaryExp ::= '(' Exp ')' | IntConst | FloatConst | StrConst | 'True' | 'False'
 FuncRParams ::= Exp { ',' Exp }
 LVal ::= ['self' '.' ] Ident {'[' Exp ']'} {'.' Ident {'[' Exp ']'}}
 LOrExp ::= LAndExp { 'or' LAndExp }

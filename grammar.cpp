@@ -600,7 +600,7 @@ void grammarAnalysis(TOKEN **token, string type, ASTNODE *root, ofstream *outfil
 		}
 	}
     else if (type == "PrimaryExp") {
-		// '(' Exp ')' | IntConst | FloatConst
+		// '(' Exp ')' | IntConst | FloatConst | StrConst | 'True' | 'False'
 		if ((*token)->type == "LPARENT") {
 			p = creatNode(root, (*token)->s, (*token)->type);
 			if (nextToken(&(*token), outfile)) return; 

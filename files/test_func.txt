@@ -16,6 +16,13 @@ def factorial(n: int) -> int:
     else:
         return n * factorial(n - 1)
 
+def isLetter(c: str) -> bool:
+    if c >= "a" and c <= "z":
+        return True
+    if c >= "A" and c <= "Z":
+        return True
+    return False
+
 def main() -> int:
     x: int = 5
     y: int = 10
@@ -28,4 +35,7 @@ def main() -> int:
 
     fact_result: int = factorial(4)
     print("Factorial:", fact_result)
+
+    c: str = "b"
+    print(c, " isLetter = ", isLetter(c))
     return 0
