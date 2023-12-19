@@ -248,11 +248,21 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
     else if (type == "Stmt") {
 		if (p->type == "LVal") {
             (*outfile) << prefix;
-            genCppCode(p, p->type, outfile, prefix); // LVal
-            (*outfile) << " = ";
-            p = p->next->next;
-            genCppCode(p, p->type, outfile, prefix); // Exp
-            (*outfile) << ";" << endl;
+            if (p->next->type == "ASSIGN") {
+                // LVal '=' Exp
+                genCppCode(p, p->type, outfile, prefix); // LVal
+                (*outfile) << " = ";
+                p = p->next->next;
+                genCppCode(p, p->type, outfile, prefix); // Exp
+                (*outfile) << ";" << endl;
+            } else {
+                // LVal '.' 'append' '(' Exp ')'
+                genCppCode(p, p->type, outfile, prefix); // LVal
+                (*outfile) << ".push_back(";  // append
+                p = p->next->next->next->next;
+                genCppCode(p, p->type, outfile, prefix); // Exp
+                (*outfile) << ");" << endl;
+            }
 		}
 		else if (p->type == "IFTK") {
             // 'if' Exp Block ['else' Block]

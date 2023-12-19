@@ -11,9 +11,10 @@ def main() -> int:
     func1()
 
     l: List[int] = [1, 2, 3]
+    l.append(4)
     l2: List[int] = func2(l)
     i: int = 0
-    while i < 3:
+    while i < 4:
         print("List[int] [", i, "] = ", l2[i])
         i = i + 1
 

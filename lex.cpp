@@ -105,6 +105,7 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
                 else if(t=="class") q->type = "CLASSTK";
                 else if(t=="self") q->type = "SELFTK";
                 else if(t=="init") q->type = "INITTK";
+                else if(t=="append") q->type = "APPENDTK";
                 else q->type = "IDENFR";
             }
 
