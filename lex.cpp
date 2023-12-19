@@ -84,6 +84,9 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
                 else if(t=="const") q->type = "CONSTTK";
                 else if(t=="int") q->type = "INTTK";
                 else if(t=="float") q->type = "FLOATTK";
+                else if(t=="bool") q->type = "BOOLTK";
+                else if(t=="str") q->type = "STRTK";
+                else if(t=="long") q->type = "LONGTK";
                 else if(t=="while") q->type = "WHILETK";
                 else if(t=="break") q->type = "BREAKTK";
                 else if(t=="continue") q->type = "CONTINUETK";

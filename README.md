@@ -45,7 +45,7 @@ g++ files\out\cpp_file.cpp -o cpp_output
 | Ident      | IDENFR     | not      | NOTTK     | !        | NOT    | (        | LPARENT |
 | IntConst   | INTCON     | and      | ANDTK     | <        | LSS    | )        | RPARENT |
 | FloatConst | FLOATCON   | or       | ORTK      | <=       | LEQ    | [        | LBRACK  |
-| str        | STRCON     | return   | RETURNTK  | >        | GRE    | ]        | RBRACK  |
+| string     | STRCON     | return   | RETURNTK  | >        | GRE    | ]        | RBRACK  |
 | const      | CONSTTK    | None     | NONETK    | >=       | GEQ    | {        | LBRACE  |
 | int        | INTTK      | AddTab   | ADDTAB    | ==       | EQL    | }        | RBRACE  |
 | break      | BREAK      | DelTab   | DELTAB    | !=       | NEQ    | +        | PLUS    |
@@ -55,7 +55,8 @@ g++ files\out\cpp_file.cpp -o cpp_output
 | def        | DEFTK      | True     | TRUETK    | ->       | ARROW  | %        | MOD     |
 | class      | CLASSTK    | TypeVar  | TYPEVARTK | .        | DOT    |          |         |
 | while      | WHILETK    | self     | SELFTK    |          |        |          |         |
-| init       | INITTK     |          |           |          |        |          |         |
+| init       | INITTK     | bool     | BOOLTK    |          |        |          |         |
+| long       | LONGTTK    | str      | STRTK     |          |        |          |         |
 
 
 
@@ -88,7 +89,7 @@ ClassInitDef ::= 'def' 'init' '(' [FuncFParams] ')' Block
 ClassFuncDef ::= 'def' Ident '(' 'self' [',' FuncFParams] ')' '->' FuncType Block
 FuncDef ::= 'def' Ident '(' [FuncFParams] ')' '->' FuncType Block
 FuncType ::= 'None' | DataType
-DataType ::= 'int' | 'float'
+DataType ::= 'int' | 'float' | 'long' | 'str' | 'bool'
     | 'List' '[' DataType ']'
     | 'Dict' '[' DataType ',' DataType ']'
     | Ident  #泛型或者类

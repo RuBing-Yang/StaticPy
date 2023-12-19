@@ -1,0 +1,8 @@
+def func(a: int) -> int:
+    return a
+
+def main() -> int:
+    x: int
+    x = func(5)
+    print(x)
+    return 0

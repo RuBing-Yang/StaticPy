@@ -7,8 +7,8 @@
 #include <fstream>
 #include <string.h>
 #include <string>
-#include<stdio.h>
-#include<malloc.h>
+#include <stdio.h>
+#include <malloc.h>
 
 using namespace std;
 

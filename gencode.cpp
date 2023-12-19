@@ -3,6 +3,9 @@
 string cpp_datatype(string type) {
     if (type == "INTTK") return "int";
     if (type == "FLOATTK") return "float";
+    if (type == "STRTK") return "string";
+    if (type == "BOOLTK") return "bool";
+    if (type == "LONGTK") return "long";
     if (type == "NONETK") return "void";
     // if (type == "LISTTK") return "vector<int>";
     // if (type == "DICTTK") return "map<int, int>";

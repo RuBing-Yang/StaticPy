@@ -21,7 +21,7 @@ int nextToken(TOKEN **token, ofstream* outfile) {
 }
 
 bool isDataType(string type) {
-	if (type == "INTTK" || type == "FLOATTK" || type == "LISTTK" || type == "DICTTK") return true;
+	if (type == "INTTK" || type == "FLOATTK" || type == "LISTTK" || type == "DICTTK" || type == "STRTK" || type == "BOOLTK" || type == "LONGTK") return true;
 	return false;
 }
 
