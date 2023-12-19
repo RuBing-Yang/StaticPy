@@ -71,7 +71,7 @@ TODO:
     - ~~LVal为List/Dict中元素赋值~~(Done)
     - ~~float数据类型~~
     - ~~List/Dict的嵌套~~
-    - list的append
+    - ~~list的append~~
 - 代码生成：
   - ~~输出c++代码~~(Done)
 - 泛型
