@@ -4,7 +4,7 @@ class Position:
     def init(x1 : int, y1 : int):
         self.x = x1
         self.y = y1
-    def getPosList() -> List[int]:
+    def getPosList(self) -> List[int]:
         l : List[int] = [x, y]
         return l
 
