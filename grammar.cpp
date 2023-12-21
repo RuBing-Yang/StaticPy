@@ -250,6 +250,10 @@ void grammarAnalysis(TOKEN **token, string type, ASTNODE *root, ofstream *outfil
 		if ((*token)->type == "IDENFR") {
 			p = creatNode(root, (*token)->s, (*token)->type);
             if (nextToken(&(*token), outfile)) return;
+			if ((*token)->type == "LSS") {
+				p = creatNode(root, "", "GenericReal");
+				grammarAnalysis(token, "GenericReal", p, outfile);
+			}
 		}
         else if ((*token)->type == "LISTTK") {
 			p = creatNode(root, (*token)->s, (*token)->type);

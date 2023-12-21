@@ -83,7 +83,6 @@ TODO:
   - ~~词法分析~~
   - 语法分析
     - ~~字符匹配~~
-    - 静态类型检查
 
 ```python
 CompUnit ::= { [GenericDefs] (ClassDef | FuncDef)}
@@ -98,7 +97,7 @@ FuncType ::= 'None' | DataType
 DataType ::= 'int' | 'float' | 'long' | 'str' | 'bool'
     | 'List' '[' DataType ']'
     | 'Dict' '[' DataType ',' DataType ']'
-    | Ident  #泛型或者类
+    | Ident [GenericReal]  #泛型或者类
 Block ::= ':' 'AddTab' {BlockItem} 'DelTab'
 BlockItem ::= Decl | Stmt
 Decl ::= Ident ':' DataType ['=' InitVal]  #静态类型检查

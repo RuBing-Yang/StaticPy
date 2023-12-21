@@ -37,4 +37,8 @@ def main() -> int:
             print("List[List[float]] [", i, ", ", j, "] = ", ll[i][j] + i * 100 + j * 10)
             j = j + 1
         i = i + 1
+
+    ds: Dict[str, str] = {"a": "aa", "b": "bb"}
+    print("Dict[str, str] [a] = ", ds["a"])
+    print("Dict[str, str] [b] = ", ds["b"])
     return 0

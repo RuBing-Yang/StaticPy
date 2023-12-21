@@ -21,6 +21,10 @@ typedef struct Token
     struct Token* next;
 }TOKEN;
 
+void testSTL(vector<int> v) {
+    v.push_back(3);
+}
+
 int main() {
     TOKEN *p = new Token("s", "type");
     printf("%s %s\n", p->s.c_str(), p->type.c_str());
@@ -35,4 +39,17 @@ int main() {
     }
     vector<int> vinitlist {1, 2, 3, 4, 5};
     vector<vector<int>> vvinitlist {{1, 2}, {3, 4, 5}};
+
+    bool b = 3;
+    cout << "bool b = 3: " << b << endl;
+    if (b) cout << "b is true" << endl;
+    else cout << "b is false" << endl;
+    int i = b + 1;
+    cout << "bool b + 1: " << i << endl;
+    float f = b;
+    cout << "float f = b: " << f << endl;
+
+    vector<int> v = {1, 2};
+    testSTL(v);
+    cout << "v.size(): " << v.size() << endl;
 }

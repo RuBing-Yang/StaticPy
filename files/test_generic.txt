@@ -2,8 +2,18 @@ AnyVar = TypeVar("AnyVar")
 def func(l: List[AnyVar]) -> AnyVar:
     return l[1]
 
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+class Exp:
+    x : T1
+    y : T2
+    def init(x1 : T1, y1 : T2):
+        self.x = x1
+        self.y = y1
+
 def main() -> int:
     l: List[float] = [1.1, 2.2, 3.3]
     v: float = func<float>(l)
+    exp: Exp<str, int> = Exp<str, int>("abc", 1)
     print(v)
     return 0

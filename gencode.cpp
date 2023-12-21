@@ -131,6 +131,10 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
     else if (type == "DataType") {
 		if (p->type == "IDENFR") {
             (*outfile) << p->s;
+            if (p->next != nullptr && p->next->type == "GenericReal") {
+                p = p->next;
+                genCppCode(p, p->type, outfile, prefix);
+            }
 		}
         else if (p->type == "LISTTK") {
             // 'List' '[' DataType ']'
