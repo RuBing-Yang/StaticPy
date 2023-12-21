@@ -79,6 +79,11 @@ TODO:
 - 类
   - ~~self的使用~~
   - ~~方法重写~~
+- 错误处理
+  - ~~词法分析~~
+  - 语法分析
+    - ~~字符匹配~~
+    - 静态类型检查
 
 ```python
 CompUnit ::= { [GenericDefs] (ClassDef | FuncDef)}

@@ -3,7 +3,7 @@
 void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
 {
     int printRes1 = 1;
-    int i, line=0;
+    int i, line = 0;
     bool is_comment = false;
     int last_tab = 0;
     string s, t;
@@ -18,17 +18,22 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
             i++;
             blank++;
         }
-        if (blank % 4 != 0)
-            cerr << "Indent is not an integer number of tabs!" << endl;
+        if (i >= s.length()) continue;
+        if (blank % 4 != 0) {
+            cerr << "[line " << line << "] IndentationError: Indent is not an integer number of tabs!" << endl;
+	        exit(1);
+        }
         if (blank / 4 > last_tab) {
-            if (blank / 4 > last_tab + 1)
-                cerr << "IndentationError: Exceed one tab one time!" << endl;
-            q = new Token("AddTab", "ADDTAB");
+            if (blank / 4 > last_tab + 1) {
+                cerr << "[line " << line << "] IndentationError: Exceed one tab one time!" << endl;
+	            exit(1);
+            }
+            q = new Token("AddTab", "ADDTAB", line);
             p->next = q;
             p = q;
         } else if (blank / 4 < last_tab) {
             for (int j = 0; j < last_tab - blank / 4; j++) {
-                q = new Token("DelTab", "DELTAB");
+                q = new Token("DelTab", "DELTAB", line);
                 p->next = q;
                 p = q;
             }
@@ -67,9 +72,11 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
                     if (s[i]=='.') isFloat = true;
                     t += s[i++];
                 }
-                if (isalpha(s[i])) //数字后面紧跟着字母
-                    cerr << "Variable names should not start with numbers" << endl;
-                q = new Token(t, isFloat ? "FLOATCON" : "INTCON");
+                if (isalpha(s[i])) { //数字后面紧跟着字母
+                    cerr << "[line " << line << "] SyntaxError: identifier starts immediately after numeric literal" << endl;
+	                exit(1);
+                }
+                q = new Token(t, isFloat ? "FLOATCON" : "INTCON", line);
             }
 
             //以字母开头
@@ -78,7 +85,7 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
                     t += s[i];
                     i++;
                 }
-                q = new Token(t, "");
+                q = new Token(t, "", line);
                 // if(t=="main") q->type = "MAINTK";
                 if(t=="def") q->type = "DEFTK";
                 else if(t=="const") q->type = "CONSTTK";
@@ -116,112 +123,112 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
                     t += s[i];
                 }
                 t += '"';
-                if (i>=s.length()) {
-                    cerr << "Missing matching closing quote" << endl;
-                    break;
+                if (i >= s.length()) {
+                    cerr << "[line " << line << "] SyntaxError: Missing matching closing quote" << endl;
+	                exit(1);
                 }
-                q = new Token(t, "STRCON");
+                q = new Token(t, "STRCON", line);
                 i++;
             }
 
             //逻辑符号
             else if (s[i]=='!') {
                 if (s[++i]=='=') {
-                    q = new Token("!=","NEQ");
+                    q = new Token("!=", "NEQ", line);
                     i++;
                 } else {
-                    q = new Token("!", "NOT");
+                    q = new Token("!", "NOT", line);
                 }
             }
             //运算符号
             else if (s[i]=='+') {
-                q = new Token("+", "PLUS");
+                q = new Token("+", "PLUS", line);
                 i++;
             }
             else if (s[i]=='-') {
                 if (s[++i]=='>') {
-                    q = new Token("->","ARROW");
+                    q = new Token("->","ARROW", line);
                     i++;
                 } else {
-                    q = new Token("-","MINU");
+                    q = new Token("-","MINU", line);
                 }
             }
             else if (s[i]=='*') {
-                q = new Token("*", "MULT");
+                q = new Token("*", "MULT", line);
                 i++;
             }
             else if (s[i]=='/') {
-                q = new Token("/", "DIV");
+                q = new Token("/", "DIV", line);
                 i++;
             }
             else if (s[i]=='%') {
-                q = new Token("%", "MOD");
+                q = new Token("%", "MOD", line);
                 i++;
             }
             //比较符号
             else if (s[i]=='<') {
                 if (s[++i]=='=') {
-                    q = new Token("<=", "LEQ");
+                    q = new Token("<=", "LEQ", line);
                     i++;
                 } else {
-                    q = new Token("<", "LSS");
+                    q = new Token("<", "LSS", line);
                 }
             }
             else if (s[i]=='>') {
                 if (s[++i]=='=') {
-                    q = new Token(">=", "GEQ");
+                    q = new Token(">=", "GEQ", line);
                     i++;
                 } else {
-                    q = new Token(">", "GRE");
+                    q = new Token(">", "GRE", line);
                 }
             }
             else if (s[i]=='=') {
                 if (s[++i]=='=') {
-                    q = new Token("==", "EQL");
+                    q = new Token("==", "EQL", line);
                     i++;
                 } else {
-                    q = new Token("=", "ASSIGN");
+                    q = new Token("=", "ASSIGN", line);
                 }
             }
             //其他符号
             else if (s[i]==':') {
-                q = new Token(":", "COLON");
+                q = new Token(":", "COLON", line);
                 i++;
             }
             else if (s[i]==',') {
-                q = new Token(",", "COMMA");
+                q = new Token(",", "COMMA", line);
                 i++;
             }
             else if (s[i]=='.') {
-                q = new Token(".", "DOT");
+                q = new Token(".", "DOT", line);
                 i++;
             }
             else if (s[i]=='(') {
-                q = new Token("(", "LPARENT");
+                q = new Token("(", "LPARENT", line);
                 i++;
             }
             else if (s[i]==')') {
-                q = new Token(")", "RPARENT");
+                q = new Token(")", "RPARENT", line);
                 i++;
             }
             else if (s[i]=='[') {
-                q = new Token("[", "LBRACK");
+                q = new Token("[", "LBRACK", line);
                 i++;
             }
             else if (s[i]==']') {
-                q = new Token("]", "RBRACK");
+                q = new Token("]", "RBRACK", line);
                 i++;
             }
             else if (s[i]=='{') {
-                q = new Token("{", "LBRACE");
+                q = new Token("{", "LBRACE", line);
                 i++;
             }
             else if (s[i]=='}') {
-                q = new Token("}", "RBRACE");
+                q = new Token("}", "RBRACE", line);
                 i++;
             }
             else {
-                cerr << "Undefined characters:" << s[i] << endl;
+                cerr << "[line " << line << "] Undefined characters:" << s[i] << endl;
                 i++;
                 continue;
             }
@@ -233,7 +240,7 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
     }
     if (last_tab > 0) {
         for (int j = 0; j < last_tab; j++) {
-            q = new Token("DelTab", "DELTAB");
+            q = new Token("DelTab", "DELTAB", line);
             p->next = q;
             p = q;
         }

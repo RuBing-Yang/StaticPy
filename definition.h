@@ -14,13 +14,15 @@ using namespace std;
 
 typedef struct Token
 {
-    Token(string _s, string _type) {
+    Token(string _s, string _type, int _line) {
         s = _s;
         type = _type;
+        line = _line;
         next = nullptr;
     }
     string s;
     string type;
+    int line;
     struct Token* next;
 }TOKEN;
 
