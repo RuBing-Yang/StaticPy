@@ -9,6 +9,9 @@
 #include <string>
 #include <stdio.h>
 #include <malloc.h>
+#include <vector>
+#include <map>
+#include <stack>
 
 using namespace std;
 
@@ -28,15 +31,17 @@ typedef struct Token
 
 typedef struct ASTNode
 {
-    ASTNode(string _s, string _type) {
+    ASTNode(string _s, string _type, int _line) {
         s = _s;
         type = _type;
+        line = _line;
         next = nullptr;
         first_child = nullptr;
         last_child = nullptr;
     }
     string s;
     string type;
+    int line;
     struct ASTNode* next;
     struct ASTNode* first_child;
     struct ASTNode* last_child;

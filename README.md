@@ -83,12 +83,28 @@ TODO:
   - ~~词法分析~~
   - 语法分析
     - ~~字符匹配~~
+    - 重定义：
+      - 同级变量重定义
+      - 类重名，泛型重名，类和泛型重名
+      - 函数名相同且参数表相同
+    - 未定义：
+      - 使用了未声明的变量
+      - 数据类型名称未定义(泛型/类)
+      - 函数未定义
+    - 静态类型检查：
+      变量赋值和函数返回值需要进行静态类型检查，规则如下：
+      - 2是int，2.2是float，x:long=2是long
+      - int和float/long加减乘除结果是float/long，不允许long+float
+      - 泛型只能和同名泛型加减乘除
+      - str只能+str或者==str或者!=str
+      - 逻辑运算结果是bool
+      - bool加减乘除int/float/long结果是int/float/long
 
 ```python
 CompUnit ::= { [GenericDefs] (ClassDef | FuncDef)}
 GenericDefs ::= {GenericDef}
 GenericDef ::= Ident '=' 'TypeVar' '(' Str ')'
-ClassDef ::= 'class' Ident ':' 'AddTab' {ClassAttrDef} [ClassInitDef] {ClassFuncDef} 'DelTab'
+ClassDef ::= 'class' Ident ':' 'AddTab' {ClassAttrDef} {ClassInitDef} {ClassFuncDef} 'DelTab'
 ClassAttrDef ::= Ident ':' DataType
 ClassInitDef ::= 'def' 'init' '(' [FuncFParams] ')' Block
 ClassFuncDef ::= 'def' Ident '(' 'self' [',' FuncFParams] ')' '->' FuncType Block

@@ -25,6 +25,30 @@ void testSTL(vector<int> v) {
     v.push_back(3);
 }
 
+class myClass {
+    public:
+        void func(int a) {
+            cout << "input is int1" << endl;
+        }
+        // void func(int a) {
+        //     cout << "input is int2" << endl;
+        // }
+        void func(float a) {
+            cout << "input is float" << endl;
+        }
+};
+
+template<class T>
+void tempFunc1(T x) {
+    x = "a";
+}
+
+template<class T1, class T2> 
+void tempFunc2(T1 x) { 
+    T2 y = x; 
+    tempFunc1<T2>(x);
+}
+
 int main() {
     TOKEN *p = new Token("s", "type");
     printf("%s %s\n", p->s.c_str(), p->type.c_str());
@@ -52,4 +76,16 @@ int main() {
     vector<int> v = {1, 2};
     testSTL(v);
     cout << "v.size(): " << v.size() << endl;
+
+    myClass c;
+    c.func(1);
+    c.func(1.1f);
+
+    tempFunc2<string, string>("a");
+    
+    float x1 = 1.1f;
+    long long x2 = 1;
+    long long x3 = 10000000000000;
+    cout << x1 << " + " << x2 << ": " << x1 + x2 << endl;
+    cout << x1 << " + " << x3 << ": " << x1 + x3 << endl;
 }

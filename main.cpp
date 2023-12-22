@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
     string testfile_name = "files/testfile.txt";
 
     TOKEN *token=nullptr, *p;
-    ASTNODE* root = new ASTNode("", "CompUnit");
+    ASTNODE* root = new ASTNode("", "CompUnit", 0);
 
     if (argc > 1) testfile_name = argv[1];
     in_file.open(testfile_name);
