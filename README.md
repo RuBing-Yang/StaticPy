@@ -18,8 +18,12 @@
 ## 运行
 
 ```
-g++ main.cpp lex.cpp grammar.cpp gencode.cpp -o compiler
+g++ main.cpp lex.cpp grammar.cpp semantic.cpp gencode.cpp -o compiler
+.\compiler.exe "files/test_mini.txt"
+.\compiler.exe "files/test_func.txt"
 .\compiler.exe "files/test_class.txt"
+.\compiler.exe "files/test_stl.txt"
+.\compiler.exe "files/test_generic.txt"
 g++ files\out\cpp_file.cpp -o cpp_output
 .\cpp_output.exe
 ```
@@ -42,18 +46,18 @@ g++ files\out\cpp_file.cpp -o cpp_output
 
 | 单词名称   | 类别码     | 单词名称 | 类别码    | 单词名称 | 类别码 | 单词名称 | 类别码  |
 | ---------- | ---------- | -------- | --------- | -------- | ------ | -------- | ------- |
-| Ident      | IDENFR     | not      | NOTTK     | !        | NOT    | (        | LPARENT |
+| Ident      | IDENFR     | not      | NOTTK     | .        | DOT    | (        | LPARENT |
 | IntConst   | INTCON     | and      | ANDTK     | <        | LSS    | )        | RPARENT |
 | FloatConst | FLOATCON   | or       | ORTK      | <=       | LEQ    | [        | LBRACK  |
-| StrConst   | STRCON     | return   | RETURNTK  | >        | GRE    | ]        | RBRACK  |
-| const      | CONSTTK    | None     | NONETK    | >=       | GEQ    | {        | LBRACE  |
+| LongConst  | LONGCON    | return   | RETURNTK  | >        | GRE    | ]        | RBRACK  |
+| StrConst   | STRCON     | None     | NONETK    | >=       | GEQ    | {        | LBRACE  |
 | int        | INTTK      | AddTab   | ADDTAB    | ==       | EQL    | }        | RBRACE  |
 | break      | BREAK      | DelTab   | DELTAB    | !=       | NEQ    | +        | PLUS    |
 | continue   | CONTINUETK | List     | LISTTK    | =        | ASSIGN | -        | MINU    |
 | if         | IFTK       | Dict     | DICTTK    | ,        | COMMA  | *        | MULT    |
 | else       | ELSETK     | False    | FALSETK   | :        | COLON  | /        | DIV     |
 | def        | DEFTK      | True     | TRUETK    | ->       | ARROW  | %        | MOD     |
-| class      | CLASSTK    | TypeVar  | TYPEVARTK | .        | DOT    |          |         |
+| class      | CLASSTK    | TypeVar  | TYPEVARTK |          |        |          |         |
 | while      | WHILETK    | self     | SELFTK    |          |        |          |         |
 | init       | INITTK     | bool     | BOOLTK    |          |        |          |         |
 | long       | LONGTTK    | str      | STRTK     |          |        |          |         |
@@ -96,9 +100,11 @@ TODO:
       - 2是int，2.2是float，x:long=2是long
       - int和float/long加减乘除结果是float/long，不允许long+float
       - 泛型只能和同名泛型加减乘除
-      - str只能+str或者==str或者!=str
+      - str只能+str或和str比较
       - 逻辑运算结果是bool
       - bool加减乘除int/float/long结果是int/float/long
+
+具体语法树：
 
 ```python
 CompUnit ::= { [GenericDefs] (ClassDef | FuncDef)}
@@ -119,7 +125,7 @@ BlockItem ::= Decl | Stmt
 Decl ::= Ident ':' DataType ['=' InitVal]  #静态类型检查
 InitVal ::= Exp
     | '[' [InitVal {',' InitVal}] ']' 
-    | '{' [InitVal ':' InitVal {',' InitVal ':' InitVal}] '}'
+    | '{' [Exp ':' InitVal {',' Exp ':' InitVal}] '}'
 FuncFParams ::= FuncFParam {',' FuncFParam}
 FuncFParam ::= Ident ':' DataType
 Stmt ::= Exp
@@ -136,7 +142,7 @@ MulExp ::= UnaryExp { ('*' | '/' | '%') UnaryExp }
 UnaryExp ::= IdentExp | PrimaryExp | ('+' | '−' | 'not') UnaryExp
 IdentExp ：：= LVal [[GenericReal] '(' [FuncRParams] ')'] #函数或类的init
 GenericReal ::= '<' DataType {',' DataType} '>'
-PrimaryExp ::= '(' Exp ')' | IntConst | FloatConst | StrConst | 'True' | 'False'
+PrimaryExp ::= '(' Exp ')' | IntConst | FloatConst | LongConst | StrConst | 'True' | 'False'
 FuncRParams ::= Exp { ',' Exp }
 LVal ::= ['self' '.' ] Ident {'[' Exp ']'} {'.' Ident {'[' Exp ']'}}
 LOrExp ::= LAndExp { 'or' LAndExp }
@@ -144,4 +150,17 @@ LAndExp ::= EqExp { 'and' EqExp }
 EqExp ::= RelExp { ('==' | '!=') RelExp }
 RelExp ::= AddExp { ('<' | '>' | '<=' | '>=') AddExp }
 ```
+
+## 语义
+
+符号表
+
+| 类型    | 组织形式                  |      |      |
+| ------- | ------------------------- | ---- | ---- |
+| class   | 原名 -> UnaryClass        |      |      |
+| func    | 原名 -> List [UnaryFunc]  |      |      |
+| var     | 原名 -> Stack [UnaryFunc] |      |      |
+| generic |                           |      |      |
+|         |                           |      |      |
+
 

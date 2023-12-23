@@ -1,7 +1,7 @@
 #include "definition.h"
 
-ASTNODE* creatNode(ASTNODE* root, string s, string type, int line) {
-	ASTNODE *p = new ASTNode(s, type, line);
+CSTNode* creatNode(CSTNode* root, string s, string type, int line) {
+	CSTNode *p = new CSTNode(s, type, line);
 	if (root->first_child == nullptr) {
 		root->first_child = root->last_child = p;
 	}
@@ -32,9 +32,9 @@ bool checkToken(TOKEN *token, string target_type, string grammar_type) {
 	return false;
 }
 
-void grammarAnalysis(TOKEN **token, string type, ASTNODE *root, ofstream *outfile)
+void grammarAnalysis(TOKEN **token, string type, CSTNode *root, ofstream *outfile)
 {
-    ASTNODE *p;
+    CSTNode *p;
 	TOKEN *t;
 	if ((*token) == nullptr) return;
     if (type == "CompUnit") {
@@ -334,7 +334,7 @@ void grammarAnalysis(TOKEN **token, string type, ASTNODE *root, ofstream *outfil
 			p = creatNode(root, "", "DataType", (*token)->line);
 			grammarAnalysis(token, "DataType", p, outfile);
 		}
-		if (checkToken((*token), "ASSIGN", type)) {
+		if ((*token)->type == "ASSIGN") {
 			p = creatNode(root, (*token)->s, (*token)->type, (*token)->line);
 			if (nextToken(&(*token), outfile)) return;
             p = creatNode(root, "", "InitVal", (*token)->line);
@@ -364,8 +364,8 @@ void grammarAnalysis(TOKEN **token, string type, ASTNODE *root, ofstream *outfil
 			p = creatNode(root, (*token)->s, (*token)->type, (*token)->line);
 			if (nextToken(&(*token), outfile)) return;
             if ((*token)->type != "RBRACE") {
-                p = creatNode(root, "", "InitVal", (*token)->line);
-                grammarAnalysis(token, "InitVal", p, outfile);
+                p = creatNode(root, "", "Exp", (*token)->line);
+                grammarAnalysis(token, "Exp", p, outfile);
 				if (checkToken((*token), "COLON", type)) {
 					p = creatNode(root, (*token)->s, (*token)->type, (*token)->line);
 					if (nextToken(&(*token), outfile)) return;
@@ -375,8 +375,8 @@ void grammarAnalysis(TOKEN **token, string type, ASTNODE *root, ofstream *outfil
                 while ((*token) != nullptr && (*token)->type == "COMMA") {
                     p = creatNode(root, (*token)->s, (*token)->type, (*token)->line);
                     if (nextToken(&(*token), outfile)) return; 
-                    p = creatNode(root, "", "InitVal", (*token)->line);
-                    grammarAnalysis(token, "InitVal", p, outfile);
+                    p = creatNode(root, "", "Exp", (*token)->line);
+                    grammarAnalysis(token, "Exp", p, outfile);
 					if (checkToken((*token), "COLON", type)) {
 						p = creatNode(root, (*token)->s, (*token)->type, (*token)->line);
 						if (nextToken(&(*token), outfile)) return;
@@ -643,7 +643,7 @@ void grammarAnalysis(TOKEN **token, string type, ASTNODE *root, ofstream *outfil
 		}
 	}
     else if (type == "PrimaryExp") {
-		// '(' Exp ')' | IntConst | FloatConst | StrConst | 'True' | 'False'
+		// '(' Exp ')' | IntConst | FloatConst | LONGCON | STRCON | 'True' | 'False'
 		if ((*token)->type == "LPARENT") {
 			p = creatNode(root, (*token)->s, (*token)->type, (*token)->line);
 			if (nextToken(&(*token), outfile)) return; 

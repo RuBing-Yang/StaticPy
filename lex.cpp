@@ -76,7 +76,23 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
                     cerr << "[line " << line << "] SyntaxError: identifier starts immediately after numeric literal" << endl;
 	                exit(1);
                 }
-                q = new Token(t, isFloat ? "FLOATCON" : "INTCON", line);
+                if (!isFloat) {
+                    try {
+                        long long int temp = stoll(t);
+                        // int: 32bit: -2147483648 ~ 2147483647
+                        if (temp > 0x7fffffff || temp < -0x7fffffff - 1) {
+                            q = new Token(t, "LONGCON", line);
+                        }
+                        else {
+                            q = new Token(t, "INTCON", line);
+                        }
+                    } catch (const std::out_of_range& oor) {
+                        cerr << "[line " << line << "] SyntaxError: long literal too large exceed 64bits" << endl;
+                        exit(1);
+                    }
+                } else {
+                    q = new Token(t, "FLOATCON", line);
+                }
             }
 
             //ÒÔ×ÖÄ¸¿ªÍ·

@@ -19,9 +19,9 @@ string cpp_unaryop(string s) {
     return "";
 }
 
-void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
+void genCppCode(CSTNode *root, string type, ofstream *outfile, string prefix){
     if (root == nullptr) return;
-    ASTNODE* p = root->first_child;
+    CSTNode* p = root->first_child;
     if (type == "CompUnit") {
         (*outfile) << "#include <iostream>" << endl;
         (*outfile) << "#include <map>" << endl;
@@ -416,7 +416,7 @@ void genCppCode(ASTNODE *root, string type, ofstream *outfile, string prefix){
             p = p->next;
             genCppCode(p, p->type, outfile, prefix); // Exp
             (*outfile) << ")";
-		} else {  // INTCON | FLOATCON | StrConst | 'True' | 'False'
+		} else {  // INTCON | FLOATCON | LONGCON | STRCON | 'True' | 'False'
             if (p->type == "TRUETK") (*outfile) << "true";
             else if (p->type == "FALSETK") (*outfile) << "false";
             else (*outfile) << p->s;

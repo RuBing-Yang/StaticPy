@@ -88,4 +88,7 @@ int main() {
     long long x3 = 10000000000000;
     cout << x1 << " + " << x2 << ": " << x1 + x2 << endl;
     cout << x1 << " + " << x3 << ": " << x1 + x3 << endl;
+
+    if ("ab" < "abc") cout << "ab < abc" << endl;
+    else cout << "ab >= abc" << endl;
 }
