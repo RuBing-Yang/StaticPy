@@ -165,56 +165,6 @@ RelExp ::= AddExp { ('<' | '>' | '<=' | '>=') AddExp }
 | generic | 名称->id                  |
 |         | List [UnaryDataType]      |
 
-数据结构
-
-```c++
-class UnaryDataType {
-    string type;  // "basic", "class", "generic" (generic不参与类型判定)
-    string name;  // "int", "float", "long", "bool", "str", "None", Ident
-}
-class NestDataType {  // 用于List和Map嵌套
-    vector<UnaryDataType> datatype_list;
-}
-class UnaryVar {
-    int level;  // 用于block结束弹栈
-    string new_name;  // 唯一确定变量
-    string old_name;  // 原程序命名
-    NestDataType nest_datatype;  // 数据类型
-}
-class VarStack {
-    stack<UnaryVar> vars;
-}
-
-class UnaryFunc {
-    string new_name;  // 唯一确定函数
-    string old_name;  // 原程序命名
-    CSTNode* cst_root;  // 模板函数泛型实现入口
-    map<string, int> generic_name2id;  // 泛型
-    vector<UnaryDataType> generics;  // 泛型取值
-    vector<NestDataType> fparams;  // 形参数据类型
-    vector<string> params_name;  // 形参名，与block内部同级
-    NestDataType ret;  // 返回值数据类型
-}
-class FuncList {
-    vector<UnaryFunc> funcs;  // 允许函数重载
-}
-
-class UnaryClass {
-    string new_name;  // 唯一确定类
-    string old_name;  // 原程序命名
-    CSTNode* cst_root;  // 模板类泛型实现入口
-    map<string, int> generic_name2id;  // 泛型
-    vector<UnaryDataType> generics;  // 泛型取值
-    map<string, NestDataType> attrs;  // 属性数据类型
-    map<string, FuncList> funcMap;  // 允许方法重载
-}
-class ClassList {
-    vector<UnaryClass> classes;  // 模板函数和它的每个泛型实现
-}
-```
-
-
-## 示例
 
 示例：
 ```python

@@ -399,13 +399,13 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
             for (const auto& it : funcMap) {
                 cout << "funcMap[" << it.first << "] " << it.second.funcs.size() << endl;
             }
+            addFunc(funcMap, func_name, *nowDefFunc, cp->line);
             if (generic_name2id.size() == 0) {
                 while (cp->type != "Block") cp = cp->next;
                 semanticAnalysis(cp, aroot, cp->type, expDataType, level);
             } else {
                 nowDefFunc->cst_root = croot;
             }
-            addFunc(funcMap, func_name, *nowDefFunc, cp->line);
         }
         // 泛型模板函数没进block，需要单独清理FuncFParams
         varMap.clear();
@@ -726,7 +726,7 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
     else if (type == "IdentExp") {
         // LVal [[GenericReal] '(' [FuncRParams] ')']
         if (cp->next != nullptr && cp->next->type == "GenericReal") {
-            // 只有全局函数才有泛型
+            // 有泛型的全局函数或者类的init函数 (都在funcMap中)
             func_generic_real(cp, expDataType, aroot, level);
         }
         // else if (cp->next != nullptr && cp->next->type == "LPARENT") {

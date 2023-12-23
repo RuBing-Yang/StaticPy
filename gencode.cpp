@@ -438,8 +438,10 @@ void genCppCode(CSTNode *root, string type, ofstream *outfile, string prefix){
         // ['self' '.' ] Ident {'[' Exp ']'} {'.' Ident {'[' Exp ']'}}
         if (p->type == "SELFTK") {
             p = p->next;
+            (*outfile) << "this";
             if (p->type == "DOT") {
                 p = p->next;
+                (*outfile) << "->";
             }
         }
         (*outfile) << p->s;
