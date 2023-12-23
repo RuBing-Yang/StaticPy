@@ -216,6 +216,19 @@ class ClassList {
 
 ## 示例
 
+语法错误:
+```python
+class Position
+    x : int
+    y : int
+    def init(x1 : int, y1 : int):
+        self.x = x1
+        self.y = y1
+```
+```bash
+[line 2] SyntaxError: <ClassDef> Expect COLON but get ADDTAB
+```
+
 示例：
 ```python
 # 泛型定义
