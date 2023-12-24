@@ -1,6 +1,6 @@
 #include "definition.h"
 
-void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
+void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile, int DEBUG)
 {
     int printRes1 = 1;
     int i, line = 0;
@@ -270,4 +270,6 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile)
             p = p->next;
         }
     }
+    
+    cout << "Lex Analysis OK!" << endl;
 }

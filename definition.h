@@ -47,42 +47,17 @@ typedef struct CSTNode
     struct CSTNode* last_child;
 }CSTNode;
 
-typedef struct ASTNode
-{
-    ASTNode(string _s, string _type) {
-        s = _s;
-        type = _type;
-        next = first_child = last_child = nullptr;
-    }
-    ASTNode(string _s, string _type, string _datatype) {
-        ASTNode(_s, _type);
-        datatype = _datatype;
-    }
-    ASTNode(CSTNode cstNode) {
-        ASTNode(cstNode.s, cstNode.type);
-    }
-    ASTNode(CSTNode cstNode, string _datatype) {
-        ASTNode(cstNode.s, cstNode.type, _datatype);
-    }
-    string s;
-    string type;
-    string datatype;
-    struct ASTNode* next;
-    struct ASTNode* first_child;
-    struct ASTNode* last_child;
-}ASTNODE;
+extern void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile=nullptr, int DEBUG=0);
 
-extern void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile=nullptr);
+extern void grammarAnalysis(TOKEN **token, string type, CSTNode *root, ofstream *outfile=nullptr, int DEBUG=0);
 
-extern void grammarAnalysis(TOKEN **token, string type, CSTNode *root, ofstream *outfile=nullptr);
-
-extern void genCppCode(CSTNode *root, string type, ofstream *outfile=nullptr, string prefix="");
+extern void genCSTCppCode(CSTNode *root, string type, ofstream *outfile=nullptr, string prefix="", int DEBUG=0);
 
 class UnaryDataType
 {
     public:
         string type;  // "basic", "class", "generic" (generic不参与类型判定)
-        string name;  // "int", "float", "long", "bool", "str", "None", Ident
+        string name;  // "int", "float", "long", "bool", "str", "None", Ident, "List"
         UnaryDataType() {}
         UnaryDataType(string _type, string _name) {
             type = _type;
@@ -96,7 +71,16 @@ class UnaryDataType
             return type + " " + name;
         }
         bool equals(UnaryDataType d) {
-            return type == d.type && name == d.name;
+            if (type != d.type) return false;
+            if (name == "List") {
+                if (d.name != "List" && d.name != "int") return false;
+                return true;
+            }
+            if (d.name == "List") {
+                if (name != "List" && name != "int") return false;
+                return true;
+            }
+            return name == d.name;
         }
         UnaryDataType copy() {
             UnaryDataType d = UnaryDataType(type, name);
@@ -245,10 +229,12 @@ class NestDataType
 
         NestDataType twoOp(string op, NestDataType d, int line) {
             if (size() != 1) {
+                cerr << to_string() << endl;
                 cerr << "[line " << line << "] SemanticError: NestDataType size of op " << op << " is " << size() << "!" << endl;
                 exit(3);
             }
             if (d.size() != 1) {
+                cerr << d.to_string() << endl;
                 cerr << "[line " << line << "] SemanticError: NestDataType size of op " << op << " is " << d.size() << "!" << endl;
                 exit(3);
             }
@@ -261,23 +247,31 @@ class UnaryVar
     // 示例：List<Map<str, Class1<str, int>>> => ["int", "str", class "Class1" ["str", "int"]]
     public:
         int level;
+        string new_name;
         string old_name;
         NestDataType nest_datatype;
         UnaryVar() {}
-        UnaryVar(int _level, string _old_name) {
-            level = _level;
-        }
-        UnaryVar(int _level, string _old_name, UnaryDataType _datatype) {
+        UnaryVar(int _level, string _old_name, string _new_name) {
             level = _level;
             old_name = _old_name;
+            new_name = _new_name;
+        }
+        UnaryVar(int _level, string _old_name, string _new_name, UnaryDataType _datatype) {
+            level = _level;
+            old_name = _old_name;
+            new_name = _new_name;
             nest_datatype.push(_datatype);
         }
-        UnaryVar(int _level, string _old_name, NestDataType _datatype) {
+        UnaryVar(int _level, string _old_name, string _new_name, NestDataType _datatype) {
             level = _level;
             old_name = _old_name;
+            new_name = _new_name;
             for (UnaryDataType d : _datatype.datatype_list) {
                 nest_datatype.push(d.copy());
             }
+        }
+        string to_string() const {
+           return old_name + " " + new_name + " " + nest_datatype.to_string();
         }
         void push(UnaryDataType d) {
             nest_datatype.push(d);
@@ -330,7 +324,7 @@ class UnaryFunc
     public:
         string new_name;
         string old_name;
-        CSTNode* cst_root;
+        CSTNode* cst_root = nullptr;
         map<string, int> generic_name2id;
         vector<UnaryDataType> generics;  // 泛型取值
         vector<NestDataType> fparams;
@@ -571,10 +565,10 @@ class UnaryClass
     public:
         string new_name;
         string old_name;
-        CSTNode* cst_root;
+        CSTNode* cst_root = nullptr;
         map<string, int> generic_name2id;
         vector<UnaryDataType> generics;  // 泛型取值
-        map<string, NestDataType> attrs;
+        map<string, UnaryVar> attrs;
         map<string, FuncList> funcMap;
 
         UnaryClass() {}
@@ -661,4 +655,29 @@ class ClassList
         }
 };
 
-extern void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType& expDataType, int level);
+typedef struct ASTNode
+{
+    ASTNode(string _s, string _type) {
+        s = _s;
+        type = _type;
+        next = nullptr;
+        first_child = nullptr;
+        last_child = nullptr;
+    }
+    ASTNode(string _s, string _type, NestDataType _datatype) {
+        s = _s;
+        type = _type;
+        datatype = _datatype;
+        next = nullptr;
+        first_child = nullptr;
+        last_child = nullptr;
+    }
+    string s;
+    string type; // 非终结符, op
+    NestDataType datatype;
+    struct ASTNode* next;
+    struct ASTNode* first_child;
+    struct ASTNode* last_child;
+}ASTNODE;
+
+extern void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType& expDataType, int level, int DEBUG=0);

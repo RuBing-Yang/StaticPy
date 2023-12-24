@@ -1,24 +1,24 @@
 # StaticPy
 
-将Python从动态类型的解释语言更改成静态类型的编译语言
+将Python从动态类型的解释型语言更改成静态类型的编译型语言
 
-目标语言为c++（如果还有时间写代码生成的话）
-
-更改：
+对Python进行的更改：
 
 - 静态类型：
-  - 在使用变量前声明采用[Type Hint](https://www.python.org/dev/peps/pep-0484/)：`x:int = 1`
+  - 在使用变量前声明采用[Type Hint](https://www.python.org/dev/peps/pep-0484/)：`x:int = 1`，严格类型检查
   - 函数：`def funcname(para: para_type) -> return_type:`
-  - 类：不允许通过self.attr动态添加属性，只能在init函数里定义
+  - 类：不允许通过self.attr动态添加属性
+  - 允许精度不降低的隐式类型转换 `bool->int->float/long`
 - 程序入口：由逐行执行改为从入口函数进入
 - 高级功能：
-  - 泛型：`AnyVar = TypeVar("AnyVar")`
-  - 类的方法的重载
+  - 为类和函数提供泛型定义：`AnyVar = TypeVar("AnyVar")`
+  - 运行函数和类的方法的重载
 
 ## 运行
 
-```
-g++ main.cpp lex.cpp grammar.cpp semantic.cpp gencode.cpp -o compiler
+```bash
+g++ main.cpp lex.cpp grammar.cpp semantic.cpp gencodeCST.cpp -o compiler
+# DEBUG模式后面加1
 .\compiler.exe "files/test_mini.txt"
 .\compiler.exe "files/test_example.txt"
 .\compiler.exe "files/test_func.txt"
@@ -37,11 +37,48 @@ g++ files\out\cpp_file.cpp -o cpp_output
 
 <img src="https://umeta.oss-cn-beijing.aliyuncs.com/wx_program/image-20231210235137259.png" alt="image-20231210235137259" width=15% />
 
-语法树：
 
+TODO:
+  - 数据结构
+    - ~~Dict声明写得有点问题~~
+    - ~~LVal为List/Dict中元素赋值~~
+    - ~~float数据类型~~
+    - ~~List/Dict的嵌套~~
+    - ~~list的append~~
+- 代码生成：
+  - ~~输出c++代码~~
+- 泛型
+  - ~~参考[pep-0484](https://peps.python.org/pep-0484/#user-defined-generic-types)~~
+- 类
+  - ~~self的使用~~
+  - ~~方法重写~~
+- 错误处理
+  - ~~词法分析~~
+    - ~~缩进不是4个空格的整数倍~~
+    - ~~代码块缩进超过一个制表符~~
+    - ~~标识符以数字开头~~
+    - ~~long长整型常数字面量超过64位~~
+    - ~~缺少匹配的闭合引号/多行注释三引号~~
+    - ~~发现未定义的字符~~
+  - ~~语法分析~~
+    - ~~字符匹配~~
+  - ~~语义分析~~：
+    - ~~重定义：~~
+      - ~~同级变量重定义~~
+      - ~~类重名，泛型重名，类和泛型重名~~
+      - ~~函数名相同且参数表相同~~
+    - ~~未定义：~~
+      - ~~使用了未声明的变量~~
+      - ~~数据类型名称未定义(泛型/类)~~
+      - ~~函数未定义~~
+      - ~~不在类的声明中使用了self~~
+    - ~~静态类型检查：~~
+      - ~~赋值语句~~
+      - ~~函数返回值~~
+      - ~~运算（以及是否允许隐式类型转换）~~
+      - ~~下标类型检查（List的id或者Dict的key）~~
 
-
-## 词法
+## 词法分析
 
 类别码
 
@@ -66,44 +103,7 @@ g++ files\out\cpp_file.cpp -o cpp_output
 
 
 
-## 文法
-
-TODO:
-  - 语法结构
-    - for循环：`for iter:type in container:`
-  - 数据结构
-    - ~~Dict声明写得有点问题~~(Done)
-    - ~~LVal为List/Dict中元素赋值~~(Done)
-    - ~~float数据类型~~
-    - ~~List/Dict的嵌套~~
-    - ~~list的append~~
-- 代码生成：
-  - ~~输出c++代码~~(Done)
-- 泛型
-  - ~~参考[pep-0484](https://peps.python.org/pep-0484/#user-defined-generic-types)~~
-- 类
-  - ~~self的使用~~
-  - ~~方法重写~~
-- 错误处理
-  - ~~词法分析~~
-  - 语法分析
-    - ~~字符匹配~~
-    - 重定义：
-      - 同级变量重定义
-      - 类重名，泛型重名，类和泛型重名
-      - 函数名相同且参数表相同
-    - 未定义：
-      - 使用了未声明的变量
-      - 数据类型名称未定义(泛型/类)
-      - 函数未定义
-    - 静态类型检查：
-      变量赋值和函数返回值需要进行静态类型检查，规则如下：
-      - 2是int，2.2是float，x:long=2是long
-      - int和float/long加减乘除结果是float/long，不允许long+float
-      - 泛型只能和同名泛型加减乘除
-      - str只能+str或和str比较
-      - 逻辑运算结果是bool
-      - bool加减乘除int/float/long结果是int/float/long
+## 语法分析
 
 具体语法树：
 
@@ -135,7 +135,7 @@ Stmt ::= Exp
     | 'while' Cond Block
     | 'break' | 'continue'
     | 'return' [Exp]  #返回值类型检查
-    | 'print' '(' [(Str | Exp) {',' (Str | Exp)}] ')'
+    | 'print' '(' [Exp {',' Exp}] ')'
     | LVal '.' 'append' '(' Exp ')'
 Exp ::= LOrExp
 AddExp ::= MulExp { ('+' | '−') MulExp }
@@ -152,9 +152,9 @@ EqExp ::= RelExp { ('==' | '!=') RelExp }
 RelExp ::= AddExp { ('<' | '>' | '<=' | '>=') AddExp }
 ```
 
-## 语义
+## 语义分析
 
-符号表
+### 符号表
 
 | 类型    | 组织形式                   |
 | ------- | ------------------------- |
@@ -165,7 +165,7 @@ RelExp ::= AddExp { ('<' | '>' | '<=' | '>=') AddExp }
 | generic | 名称->id                  |
 |         | List [UnaryDataType]      |
 
-数据结构
+### 数据结构
 
 ```c++
 class UnaryDataType {
@@ -212,6 +212,46 @@ class ClassList {
     vector<UnaryClass> classes;  // 模板函数和它的每个泛型实现
 }
 ```
+
+### 抽象语义树
+
+命名格式：函数名为func_id，类名为class_id，变量名、类属性名、函数形参名为var_id
+
+| type         | s                                                | datatype                      | 子节点                                                 | 描述                                  |
+| ------------ | ------------------------------------------------ | ----------------------------- | ------------------------------------------------------ | ------------------------------------- |
+| CompUnit     |                                                  |                               | {ClassDef}, {FuncDef}                                  |                                       |
+| ClassDef     | 类名class_id                                     | class class_name              | {ClassAttrDef}, {ClassInitDef}, {ClassFuncDef}, Block  | 类定义                                |
+| ClassAttrDef | 类属性名var_id                                   | 属性数据类型                  |                                                        |                                       |
+| ClassInitDef | 类函数名func_id                                  | class class_name              | Block                                                  |                                       |
+| ClassFuncDef | 类函数名func_id                                  | 函数返回数据类型              | Block                                                  |                                       |
+| FuncDef      | 函数名func_id                                    | 函数返回数据类                | {FuncFParam}, Block                                    | 函数定义                              |
+| FuncFParam   | 函数形参名var_id                                 | 形参数据类型                  |                                                        |                                       |
+| Block        |                                                  |                               |                                                        | 代码块                                |
+| Decl         | =                                                |                               | 变量var，赋值InitVal (ListInitVal / DictInitVal / Exp) |                                       |
+|              | 变量名                                           | 变量数据类型                  |                                                        |                                       |
+| ListInitVal  |                                                  |                               | {列表元素}                                             | 每个列表元素是InitVal，允许嵌套       |
+| DictInitVal  |                                                  |                               | {DictElement}                                          |                                       |
+| DictElement  |                                                  |                               | Exp, Exp / InitVal                                     | key - value，value可以继续嵌套InitVal |
+| Stmt         | =                                                |                               | LVal, Exp                                              |                                       |
+|              | append                                           |                               | Exp                                                    |                                       |
+|              | if                                               |                               | Exp, Block[, Block]                                    | 可能有else对应的Block                 |
+|              | while                                            |                               | Exp, Block                                             |                                       |
+|              | break/continue                                   |                               |                                                        |                                       |
+|              | return                                           |                               | [Exp]                                                  | 无返回值函数没有子节点                |
+|              | print                                            |                               | {Exp}                                                  |                                       |
+| Exp          |                                                  | 由运算结果决定                | TwoOp/OneOp/const/LVal                                 |                                       |
+| TwoOp        | 二元运算符+-*/% > < == != >= <= and or           | 由运算结果决定                | 左右两个子运算树，中缀表达式                           |                                       |
+| OneOp        | 一元运算符 +-not                                 | 由运算结果决定                | 一个子运算树                                           |                                       |
+| const        | int/float/long数字 <br />字符串 布尔值True/False | basic int/float/long/str/bool |                                                        |                                       |
+| LVal         |                                                  |                               | [self] var/attr {index} {FuncCall/attr {index}}        |                                       |
+| self         | self                                             |                               |                                                        |                                       |
+| var          | 变量名var_id                                     | 变量数据类型                  |                                                        |                                       |
+| attr         | 类属性名var_id                                   | 属性数据类型                  |                                                        |                                       |
+| FuncCall     | 函数名                                           | 函数返回数据类型              | {FuncRParam}                                           |                                       |
+| FuncRParam   |                                                  |                               | Exp                                                    | 函数实参                              |
+| Index        |                                                  | 索引数据类型                  | Exp                                                    |                                       |
+
+
 
 
 ## 示例

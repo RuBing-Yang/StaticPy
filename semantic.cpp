@@ -19,8 +19,29 @@ map<string, UnaryDataType> generic_real_map;
 
 ASTNode *astRoot = nullptr;
 
-ASTNode* creatNode(ASTNode* aroot, string s, string type, string datatype = "")
+ASTNode* creatNode(ASTNode* aroot, string s, string type)
 {
+    if (aroot == nullptr) {
+        cerr << "creatNode with null root node!" << endl;
+        exit(3);
+    }
+    ASTNode *ap = new ASTNode(s, type);
+	if (aroot->first_child == nullptr) {
+		aroot->first_child = aroot->last_child = ap;
+	}
+	else {
+		aroot->last_child->next = ap;
+		aroot->last_child = ap;
+	}
+    return ap;
+}
+
+ASTNode* creatNode(ASTNode* aroot, string s, string type, NestDataType datatype)
+{
+    if (aroot == nullptr) {
+        cerr << "creatNode with null root node!" << endl;
+        exit(3);
+    }
 	ASTNode *ap = new ASTNode(s, type, datatype);
 	if (aroot->first_child == nullptr) {
 		aroot->first_child = aroot->last_child = ap;
@@ -29,14 +50,14 @@ ASTNode* creatNode(ASTNode* aroot, string s, string type, string datatype = "")
 		aroot->last_child->next = ap;
 		aroot->last_child = ap;
 	}
-	return ap;
+    return ap;
 }
 
 int var_cnt = 0;
 int func_cnt = 0;
 int class_cnt = 0;
 
-string newSymbolName (string type)
+string newSymbolName(string type)
 {
     if (type == "var") {
         return "var" + to_string(var_cnt++);
@@ -120,23 +141,25 @@ vector<UnaryDataType> readGenericReal(CSTNode* cp)
     return temp_generics;
 }
 
-vector<NestDataType> readFuncRParams(CSTNode* cp, ASTNode* aroot, int level) {
+vector<NestDataType> readFuncRParams(CSTNode* cp, ASTNode* aroot, int level, int DEBUG=0) {
     // FuncRParams ::= Exp { ',' Exp }
     vector<NestDataType> res;
     NestDataType expDataType = NestDataType();
-    semanticAnalysis(cp, aroot, cp->type, expDataType, level); // Exp
+    ASTNode* ap = creatNode(aroot, "", "FuncRParam", expDataType);
+    semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // Exp
     res.push_back(expDataType);
     cp = cp->next;
     while (cp != nullptr && cp->type == "COMMA") {
         cp = cp->next;
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level); // Exp
+        ap = creatNode(ap, "", "FuncRParam", expDataType);
+        semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // Exp
         res.push_back(expDataType);
         cp = cp->next;
     }
     return res;
 }
 
-void class_generic_real(CSTNode* cp, NestDataType& expDataType)
+void class_generic_real(CSTNode* cp, NestDataType& expDataType, int DEBUG=0)
 {
     // Ident '<' DataType {',' DataType} '>'
     string class_name = cp->s;
@@ -156,7 +179,7 @@ void class_generic_real(CSTNode* cp, NestDataType& expDataType)
         string _new_name = newSymbolName("class");
         UnaryClass _c = c.real(_new_name, temp_generics, cp->line);
         expDataType.push(UnaryDataType("class", _new_name));
-        cout << "class_generic_real " << _c.to_string() << endl;
+        if (DEBUG) cout << "class_generic_real " << _c.to_string() << endl;
 
         // 保存现场
         map<string, VarStack> _varMap = map<string, VarStack>(varMap);
@@ -174,7 +197,7 @@ void class_generic_real(CSTNode* cp, NestDataType& expDataType)
         
         //开始重新过一遍类的定义
         NestDataType expDataType2;
-        semanticAnalysis(c.cst_root, astRoot, "ClassDef", expDataType2, 0);
+        semanticAnalysis(c.cst_root, astRoot, "ClassDef", expDataType2, 0, DEBUG);
         
         // 恢复现场
         varMap = _varMap;
@@ -186,10 +209,11 @@ void class_generic_real(CSTNode* cp, NestDataType& expDataType)
     }
 }
 
-void func_generic_real(CSTNode* cp, NestDataType& expDataType, ASTNode* aroot, int level)
+void func_generic_real(CSTNode* cp, NestDataType& expDataType, ASTNode* aroot, int level, int DEBUG=0)
 {
     // LVal[Ident] GenericReal['<' DataType {',' DataType} '>'] '(' [FuncRParams] ')'
     string func_name = cp->first_child->s;
+    ASTNode* ap = creatNode(aroot, func_name, "FuncCall");
     if (funcMap.find(func_name) == funcMap.end()) {
         cerr << "[line " << cp->line << "] SemanticError: Undefined func identifier '" << cp->s << "'!" << endl;
         exit(3);
@@ -199,10 +223,12 @@ void func_generic_real(CSTNode* cp, NestDataType& expDataType, ASTNode* aroot, i
         temp_generics = readGenericReal(cp->next->first_child);
     vector<NestDataType> temp_rparams;
     if (cp->next->next->next != nullptr && cp->next->next->next->type == "FuncRParams")
-        temp_rparams = readFuncRParams(cp->next->next->next->first_child, aroot, level);
+        temp_rparams = readFuncRParams(cp->next->next->next->first_child, ap, level, DEBUG);
     UnaryFunc f;
     if (funcMap[func_name].find(temp_generics, temp_rparams, f)) {
         expDataType = f.ret;
+        ap->s = f.new_name;
+        ap->datatype = f.ret;
     } else {
         if (!funcMap[func_name].findTemp(temp_generics, temp_rparams, f)) {
             cerr << "[line " << cp->line << "] SemanticError: Cannot find template function " << cp->s << " !" << endl;
@@ -210,9 +236,12 @@ void func_generic_real(CSTNode* cp, NestDataType& expDataType, ASTNode* aroot, i
         }
         string _new_name = newSymbolName("func");
         UnaryFunc _f = f.real(_new_name, temp_generics, cp->line);
+        ap->s = _new_name;
+        ap->datatype = _f.ret;
+
         expDataType = _f.ret;
         addFunc(funcMap, func_name, _f, cp->line);
-        cout << "func_generic_real " << _f.to_string() << endl;
+        if (DEBUG) cout << "func_generic_real " << _f.to_string() << endl;
 
         // 保存现场
         map<string, VarStack> _varMap = map<string, VarStack>(varMap);
@@ -230,7 +259,7 @@ void func_generic_real(CSTNode* cp, NestDataType& expDataType, ASTNode* aroot, i
         
         //开始重新过一遍函数的定义
         NestDataType expDataType2;
-        semanticAnalysis(f.cst_root, astRoot, "FuncDef", expDataType2, 0);
+        semanticAnalysis(f.cst_root, astRoot, "FuncDef", expDataType2, 0, DEBUG);
         
         // 恢复现场
         varMap = _varMap;
@@ -242,32 +271,34 @@ void func_generic_real(CSTNode* cp, NestDataType& expDataType, ASTNode* aroot, i
     }
 }
 
-void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType& expDataType, int level)
+void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType& expDataType, int level, int DEBUG)
 {
     if (croot == nullptr) return;
-    ASTNode *ap;
+    ASTNode *ap = nullptr;
     CSTNode* cp = croot->first_child;
+    if (DEBUG) cout << "[" << type << "]" << "start " << cp->s << endl;
     if (type == "CompUnit") {
         // { [GenericDefs] (ClassDef | FuncDef) }
         astRoot = aroot;
         while (cp != nullptr) {
             nowDefFunc = nullptr;
             nowDefClass = nullptr;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+            semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
             if (cp->type != "GenericDefs") {
                 generic_name2id.clear();
             }
             expDataType.clear();
             cp = cp->next;
         }
+        cout << "Semantic Analysis & Type Check OK!" << endl;
     }
     else if (type == "GenericDefs") {
         generic_name2id.clear();
         if (cp->type == "GenericDef") {
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+            semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
             cp = cp->next;
             while (cp != nullptr && cp->type == "GenericDef") {
-                semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+                semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
                 cp = cp->next;
             }
         }
@@ -306,17 +337,18 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
             }
         }
         if (generic_name2id.size() == 0) {
+            ap = creatNode(aroot, new_name, "ClassDef", NestDataType(UnaryDataType("class", new_name)));
             cp = cp->next->next->next;
             while (cp != nullptr && cp->type == "ClassAttrDef") {
-                semanticAnalysis(cp, ap, cp->type, expDataType, level);
+                semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG);
                 cp = cp->next;
             }
             while (cp != nullptr && cp->type == "ClassInitDef") {
-                semanticAnalysis(cp, ap, cp->type, expDataType, level);
+                semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG);
                 cp = cp->next;
             }
             while (cp != nullptr && cp->type == "ClassFuncDef") {
-                semanticAnalysis(cp, ap, cp->type, expDataType, level);
+                semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG);
                 cp = cp->next;
             }
         } else {
@@ -331,14 +363,16 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
 	}
 	else if (type == "ClassAttrDef") {
         // Ident ':' DataType
-        string attr_name = cp->s;      
+        string attr_name = cp->s;
         if (nowDefClass->attrs.find(attr_name) != nowDefClass->attrs.end()) {
             cerr << "[line " << cp->line << "] SemanticError: Attribute name '" << attr_name << "' of class has been defined!" << endl;
             exit(3);
         }
         while (cp->type != "DataType") cp = cp->next;
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level);
-        nowDefClass->attrs[attr_name] = expDataType;
+        semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
+        string new_name = newSymbolName("var");
+        nowDefClass->attrs[attr_name] = UnaryVar(level, attr_name, new_name, expDataType);
+        ap = creatNode(aroot, attr_name, "ClassAttrDef", expDataType);
         expDataType.clear();
 	}
 	else if (type == "ClassInitDef") {
@@ -346,14 +380,15 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
         string new_name = newSymbolName("func");
         nowDefFunc = new UnaryFunc(new_name, nowDefClass->old_name, generic_name2id, generic_real_list);
         nowDefFunc->ret = NestDataType(UnaryDataType("class", nowDefClass->new_name));
+        ap = creatNode(aroot, new_name, "ClassInitDef", nowDefFunc->ret);
         cp = cp->next->next->next;
         if (cp->type == "FuncFParams") {
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level + 1);
+            semanticAnalysis(cp, aroot, cp->type, expDataType, level + 1, DEBUG);
         }
         addFunc(nowDefClass->funcMap, "init", *nowDefFunc, cp->line);
         addFunc(funcMap, nowDefClass->old_name, *nowDefFunc, cp->line);
         while (cp->type != "Block") cp = cp->next;
-		semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+		semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
         nowDefFunc = nullptr;
 	}
 	else if (type == "ClassFuncDef") {
@@ -361,48 +396,60 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
         cp = cp->next;
         string new_name = newSymbolName("func");
         string func_name = cp->s;
-        nowDefFunc = new UnaryFunc(new_name, func_name, generic_name2id, generic_real_list);
+        nowDefFunc = new UnaryFunc(new_name, func_name, generic_name2id, generic_real_list);        
+        ap = creatNode(aroot, new_name, "ClassFuncDef");
+
         cp = cp->next->next->next->next;
         if (cp->type == "FuncFParams") {
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level + 1);
+            semanticAnalysis(cp, ap, cp->type, expDataType, level + 1, DEBUG);
         }
+
         while (cp->type != "FuncType") cp = cp->next;
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level);
-        cout << "[ClassFuncDef] " << nowDefFunc->to_string() << endl;
+        expDataType.clear();
+        semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG);
+        ap->datatype = expDataType;
         addFunc(nowDefClass->funcMap, func_name, *nowDefFunc, cp->line);
+
         while (cp->type != "Block") cp = cp->next;
-		semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+		semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG);
         nowDefFunc = nullptr;
 	}
     else if (type == "FuncDef") {
         // 'def' Ident '(' [FuncFParams] ')' '->' FuncType Block
         cp = cp->next;
-        string new_name = newSymbolName("func");
         string func_name = cp->s;
-        if (nowDefFunc != nullptr) {  // 泛型模板函数的实例化, UnaryFunc已声明
+        string new_name = func_name;
+        if (func_name != "main") new_name = newSymbolName("func");
+        bool isTemplate = false;
+        if (generic_name2id.size() != 0)  // 是模板函数
+            isTemplate = true;
+        if (nowDefFunc != nullptr) {  // 泛型模板函数的实现, UnaryFunc已声明
+            ap = creatNode(aroot, nowDefFunc->new_name, "FuncDef", nowDefFunc->ret);
             for (int i = 0; i < nowDefFunc->fparams.size(); i++) {
                 string param_name = nowDefFunc->params_name[i];
                 NestDataType d = nowDefFunc->fparams[i];
-                addVar(varMap, param_name, UnaryVar(level, param_name, d), cp->line);
+                string new_name = newSymbolName("var");
+                addVar(varMap, param_name, UnaryVar(level, param_name, new_name, d), cp->line);
+                creatNode(ap, new_name, "FuncFParam", d);
             }
             while (cp->type != "Block") cp = cp->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+            semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG);
         }
         else {
             nowDefFunc = new UnaryFunc(new_name, func_name, generic_name2id, generic_real_list);
+            if (!isTemplate) ap = creatNode(aroot, new_name, "FuncDef");
             cp = cp->next->next;
             if (cp->type == "FuncFParams") {
-                semanticAnalysis(cp, aroot, cp->type, expDataType, level + 1);
+                semanticAnalysis(cp, ap, cp->type, expDataType, level + 1, DEBUG);
             }
+            expDataType.clear();
             while (cp->type != "FuncType") cp = cp->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);
-            for (const auto& it : funcMap) {
-                cout << "funcMap[" << it.first << "] " << it.second.funcs.size() << endl;
-            }
+            semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG);
             addFunc(funcMap, func_name, *nowDefFunc, cp->line);
-            if (generic_name2id.size() == 0) {
+            if (!isTemplate) {
+                ap->datatype = expDataType;
                 while (cp->type != "Block") cp = cp->next;
-                semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+                semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
             } else {
                 nowDefFunc->cst_root = croot;
             }
@@ -415,7 +462,7 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
         if (cp->type == "NONETK") {
 			nowDefFunc->ret = NestDataType(UnaryDataType("basic", "None"));
 		} else {
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+            semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
             nowDefFunc->ret = expDataType;
         }
     }
@@ -424,7 +471,7 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
             // Ident [GenericReal]
             expDataType.end = true;
             if (cp->next != nullptr && cp->next->type == "GenericReal") {
-                class_generic_real(cp, expDataType);
+                class_generic_real(cp, expDataType, DEBUG);
             }
             else {
                 if (classMap.find(cp->s) != classMap.end()) {
@@ -451,22 +498,22 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
 		}
         else if (cp->type == "LISTTK") {
             // 'List' '[' DataType ']'
-            expDataType.push(UnaryDataType("basic", "int"));
+            expDataType.push(UnaryDataType("basic", "List"));
             cp = cp->next->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);  // DataType
+            semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);  // DataType
         }
         else if (cp->type == "DICTTK") {
             // 'Dict' '[' DataType ',' DataType ']'
             cp = cp->next->next;
             NestDataType keyDataType;
-            semanticAnalysis(cp, aroot, cp->type, keyDataType, level);  // DataType
+            semanticAnalysis(cp, aroot, cp->type, keyDataType, level, DEBUG);  // DataType
             if (keyDataType.datatype_list.size() != 1 || keyDataType.datatype_list[0].type != "basic") {
                 cerr << "[line " << cp->line << "] SemanticError: Dict key type must be basic type!" << endl;
                 exit(3);
             }
             expDataType.push(keyDataType.datatype_list[0]);
             cp = cp->next->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);  // DataType
+            semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);  // DataType
         }
         else {
             // 'int' | 'float' | 'long' | 'str' | 'bool'
@@ -475,9 +522,10 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
         }
     }
     else if (type == "Block") {
+        ap = creatNode(aroot, "", "Block");
         while (cp->type != "BlockItem") cp = cp->next;
         while (cp != nullptr && cp->type == "BlockItem") {
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level + 1);
+            semanticAnalysis(cp, ap, cp->type, expDataType, level + 1, DEBUG);
             cp = cp->next;
         }
         // Block内部作用域的变量出栈
@@ -495,20 +543,32 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
     else if (type == "BlockItem") {
         // Decl | Stmt
         expDataType.clear();
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+        semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
         expDataType.clear();
     }
     else if (type == "Decl") {
         // Decl ::= Ident ':' DataType ['=' InitVal]
+        bool isAssign = false;
+        while (cp != nullptr) {
+            if (cp->type == "ASSIGN") {
+                isAssign = true;
+                cp = croot->first_child;
+                ap = creatNode(aroot, "=", "Decl");
+                break;
+            }
+            cp = cp->next;
+        }
+        cp = croot->first_child;
         string var_name = cp->s;
         while (cp->type != "DataType") cp = cp->next;
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level);
-        addVar(varMap, var_name, UnaryVar(level, var_name, expDataType), cp->line);
-        cp = cp->next;
-        if (cp != nullptr && cp->type == "ASSIGN") {
+        semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG);
+        string new_name = newSymbolName("var");
+        addVar(varMap, var_name, UnaryVar(level, var_name, new_name, expDataType), cp->line);
+        creatNode(isAssign ? ap : aroot, new_name, "var", expDataType);
+        if (isAssign) {
             NestDataType expDataType2;
-            cp = cp->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType2, level); // InitVal
+            while (cp->type != "InitVal") cp = cp->next;
+            semanticAnalysis(cp, ap, cp->type, expDataType2, level, DEBUG); // InitVal
             // 变量初始化静态类型检查
             expDataType.tryAssign(expDataType2, cp->line);
         }
@@ -517,21 +577,24 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
 		if (cp->type == "LBRACK") {  // List
             // '[' [InitVal {',' InitVal}] ']' 
             cp = cp->next;
-            if (!expDataType.end) expDataType.push(UnaryDataType("basic", "int"));
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+            ap = creatNode(aroot, "", "ListInitVal");
+            if (!expDataType.end) expDataType.push(UnaryDataType("basic", "List"));
+            semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG);
             cp = cp->next;
             while (cp != nullptr && cp->type == "COMMA") {
                 cp = cp->next;
                 NestDataType expDataType2;
-                semanticAnalysis(cp, aroot, cp->type, expDataType, level);  // InitVal
+                semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG);  // InitVal
                 cp = cp->next;
             }
 		}
         else if (cp->type == "LBRACE") {  // Dict
             // '{' [Exp ':' InitVal {',' Exp ':' InitVal}] '}'
             cp = cp->next;
+            ap = creatNode(aroot, "", "DictInitVal");
+            ASTNode *ap1 = creatNode(ap, "", "DictElement");
             NestDataType expDataType1;
-            semanticAnalysis(cp, aroot, cp->type, expDataType1, level);  // key: Exp
+            semanticAnalysis(cp, ap1, cp->type, expDataType1, level, DEBUG);  // key: Exp
             if (expDataType1.datatype_list.size() != 1 || expDataType1.datatype_list[0].type != "basic") {
                 cerr << "[line " << cp->line << "] SemanticError: Dict key type must be basic type!" << endl;
                 exit(3);
@@ -539,12 +602,13 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
             string basic_type = expDataType1.datatype_list[0].name;
             if (!expDataType.end) expDataType.push(UnaryDataType("basic", basic_type));
             cp = cp->next->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);  // value: InitVal
+            semanticAnalysis(cp, ap1, cp->type, expDataType, level, DEBUG);  // value: InitVal
             cp = cp->next;
             while (cp->type == "COMMA") {
                 cp = cp->next;
+                ASTNode *ap1 = creatNode(ap, "", "DictElement");
                 NestDataType expDataType2;
-                semanticAnalysis(cp, aroot, cp->type, expDataType2, level);  // key: Exp
+                semanticAnalysis(cp, ap1, cp->type, expDataType2, level, DEBUG);  // key: Exp
                 if (expDataType2.datatype_list.size() != 1 || expDataType2.datatype_list[0].type != "basic") {
                     cerr << "[line " << cp->line << "] SemanticError: Dict key type must be basic type!" << endl;
                     exit(3);
@@ -554,12 +618,12 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
                     exit(3);
                 }
                 cp = cp->next->next;
-                semanticAnalysis(cp, aroot, cp->type, expDataType, level);  // value: InitVal
+                semanticAnalysis(cp, ap1, cp->type, expDataType, level, DEBUG);  // value: InitVal
             }
 		}
 		else {  // Exp
             NestDataType expDataType2;
-            semanticAnalysis(cp, aroot, cp->type, expDataType2, level);
+            semanticAnalysis(cp, aroot, cp->type, expDataType2, level, DEBUG);
             // if (expDataType2.datatype_list.size() != 1 && expDataType2.datatype_list[0].type != "basic") {
             //     cerr << "[line " << cp->line << "] SemanticError: InitVal element must be basic type!" << endl;
             //     exit(3);
@@ -580,11 +644,11 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
 		}
     }
     else if (type == "FuncFParams") {
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+        semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
         cp = cp->next;
 		while (cp != nullptr && cp->type == "COMMA") {
             cp = cp->next;
-			semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+			semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
             cp = cp->next;
 		}
     }
@@ -593,32 +657,35 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
         string fparam_name = cp->s;
         nowDefFunc->params_name.push_back(fparam_name);
         cp = cp->next->next;  // DataType
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+        semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
         nowDefFunc->fparams.push_back(expDataType);
-        addVar(varMap, fparam_name, UnaryVar(level, fparam_name, expDataType), cp->line);
+        string new_name = newSymbolName("var");
+        addVar(varMap, fparam_name, UnaryVar(level, fparam_name, new_name, expDataType), cp->line);
+        if (aroot != nullptr) creatNode(aroot, new_name, "FuncFParam", expDataType);
         expDataType.clear();
     }
     else if (type == "Stmt") {
 		if (cp->type == "LVal") {
             if (cp->next != nullptr && cp->next->type == "ASSIGN") {
                 //  '=' Exp
-                semanticAnalysis(cp, aroot, cp->type, expDataType, level); // LVal
-                cout << endl;
+                ap = creatNode(aroot, "=", "Stmt");
+                semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // LVal
                 cp = cp->next->next;
                 NestDataType expDataType2;
-                semanticAnalysis(cp, aroot, cp->type, expDataType2, level); // Exp
+                semanticAnalysis(cp, ap, cp->type, expDataType2, level, DEBUG); // Exp
                 // 赋值语句静态类型检查
                 expDataType.tryAssign(expDataType2, cp->line);
             } else {
                 // LVal '.' 'append' '(' Exp ')'
-                semanticAnalysis(cp, aroot, cp->type, expDataType, level); // LVal
+                ap = creatNode(aroot, "append", "Stmt");
+                semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // LVal
                 if (expDataType.datatype_list[0].name != "int") {
                     cerr << "[line " << cp->line << "] SemanticError: Cannot append element to non-list type" << endl;
                     exit(3);
                 }
                 cp = cp->next->next->next->next;
                 NestDataType expDataType2;
-                semanticAnalysis(cp, aroot, cp->type, expDataType2, level); // Exp
+                semanticAnalysis(cp, ap, cp->type, expDataType2, level, DEBUG); // Exp
                 if (!expDataType2.equals(expDataType.datatype_list, 1)) {
                     cerr << "[line " << cp->line << "] SemanticError: Cannot append element to different type" << endl;
                     exit(3);
@@ -628,44 +695,47 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
 		else if (cp->type == "IFTK") {
             // 'if' Exp Block ['else' Block]
             cp = cp->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level); // Exp
+            ap = creatNode(aroot, "if", "Stmt");
+            semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // Exp
             if (expDataType.datatype_list[0].name != "bool") {
                 cerr << "[line " << cp->line << "] SemanticError: If condition" << expDataType.datatype_list[0].name << "is not bool type" << endl;
                 exit(3);
             }
             cp = cp->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level); // Block
+            semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // Block
             cp = cp->next;
             if (cp != nullptr && cp->type == "ELSETK") {
                 cp = cp->next;
-                semanticAnalysis(cp, aroot, cp->type, expDataType, level); // Block
+                semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // Block
             }
 		}
 		else if (cp->type == "WHILETK") {
             // 'while' Exp Block
             cp = cp->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level); // Exp
+            ap = creatNode(aroot, "while", "Stmt");
+            semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // Exp
             if (expDataType.datatype_list[0].name != "bool") {
                 cerr << "[line " << cp->line << "] SemanticError: While condition" << expDataType.datatype_list[0].name << "is not bool type" << endl;
                 exit(3);
             }
             cp = cp->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level); // Block
+            semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // Block
 		}
 		else if (cp->type == "BREAKTK") {
-            // do nothing
+            creatNode(aroot, "break", "Stmt");
 		}
 		else if (cp->type == "CONTINUETK") {
-            // do nothing
+            creatNode(aroot, "continue", "Stmt");
 		}
 		else if (cp->type == "RETURNTK") {
+            ap = creatNode(aroot, "return", "Stmt");
             if (nowDefFunc == nullptr) {
                 cerr << "[line " << cp->line << "] SemanticError: Return statement must be in a function!" << endl;
                 exit(3);
             }
             cp = cp->next;
             if (cp != nullptr && cp->type == "Exp") {
-                semanticAnalysis(cp, aroot, cp->type, expDataType, level); // Exp
+                semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // Exp
             } else {
                 // return; 未传递返回值
                 expDataType = NestDataType(UnaryDataType("basic", "None"));
@@ -674,7 +744,13 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
             nowDefFunc->ret.tryAssign(expDataType, cp->line);
 		}
         else if (cp->type == "PRINTTK") {
-            // do nothing
+            // 'print' '(' [Exp {',' Exp}] ')'
+            ap = creatNode(aroot, "print", "Stmt");
+            cp = cp->next->next;
+            while (cp != nullptr && cp->type == "Exp") {
+                semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // Exp
+                cp = cp->next->next;
+            }
         }
 		else {
             // Exp
@@ -682,28 +758,43 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
 		}
     }
     else if (type == "Exp") {
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level); // LOrExp
+        creatNode(aroot, "", "Exp");
+        semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG); // LOrExp
 	}
 	else if (type == "AddExp") {
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level); // MulExp
+        ap = aroot;
+        if (cp->next != nullptr) 
+            ap = creatNode(aroot, cp->next->s, "TwoOp");
+        semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // MulExp
         cp = cp->next;
         while (cp != nullptr && (cp->type == "PLUS" || cp->type == "MINU")) {
             string op = cp->s;
             cp = cp->next;
+            ASTNode* ap1 = ap;
+            if (cp->next != nullptr) 
+                ap1 = creatNode(ap, cp->next->s, "TwoOp");
             NestDataType expDataType2;
-            semanticAnalysis(cp, aroot, cp->type, expDataType2, level); // MulExp
+            semanticAnalysis(cp, ap1, cp->type, expDataType2, level, DEBUG); // MulExp
+            // 运算数据类型检查
             expDataType = expDataType.twoOp(op, expDataType2, cp->line);
             cp = cp->next;
         }
 	}
     else if (type == "MulExp") { 
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level); // UnaryExp
+        ap = aroot;
+        if (cp->next != nullptr) 
+            ap = creatNode(aroot, cp->next->s, "TwoOp");
+        semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // UnaryExp
         cp = cp->next;
         while (cp != nullptr && (cp->type == "MULT" || cp->type == "DIV" || cp->type == "MOD")) {
             string op = cp->s;
             cp = cp->next;
+            ASTNode* ap1 = ap;
+            if (cp->next != nullptr) 
+                ap1 = creatNode(ap, cp->next->s, "TwoOp");
             NestDataType expDataType2;
-            semanticAnalysis(cp, aroot, cp->type, expDataType2, level); // UnaryExp
+            semanticAnalysis(cp, ap1, cp->type, expDataType2, level, DEBUG); // UnaryExp
+            // 运算数据类型检查
             expDataType = expDataType.twoOp(op, expDataType2, cp->line);
             cp = cp->next;
         }
@@ -711,23 +802,25 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
     else if (type == "UnaryExp") {
         if (cp->type == "UnaryOp") {
             string op = cp->s;
+            ap = creatNode(aroot, op, "OneOp");
             cp = cp->next;
             NestDataType expDataType2;
-            semanticAnalysis(cp, aroot, cp->type, expDataType2, level); // UnaryExp
+            semanticAnalysis(cp, ap, cp->type, expDataType2, level, DEBUG); // UnaryExp
+            // 运算数据类型检查
             expDataType = expDataType.oneOp(op, cp->line);
         }
 		else if (cp->type == "IdentExp") {
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);
+            semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);
 		}
 		else {
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);  // PrimaryExp
+            semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);  // PrimaryExp
 		}
 	}
     else if (type == "IdentExp") {
         // LVal [[GenericReal] '(' [FuncRParams] ')']
         if (cp->next != nullptr && cp->next->type == "GenericReal") {
             // 有泛型的全局函数或者类的init函数 (都在funcMap中)
-            func_generic_real(cp, expDataType, aroot, level);
+            func_generic_real(cp, expDataType, aroot, level, DEBUG);
         }
         // else if (cp->next != nullptr && cp->next->type == "LPARENT") {
         //     string func_name = cp->first_child->s;
@@ -753,27 +846,35 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
         //     }
         // }
         else {
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level);  // LVal
+            semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG);  // LVal
         }   
     }
     else if (type == "PrimaryExp") {
 		if (cp->type == "LPARENT") {
             cp = cp->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level); // Exp
+            semanticAnalysis(cp, aroot, cp->type, expDataType, level, DEBUG); // Exp
 		} else {  // INTCON | FLOATCON | LONGCON | STRCON | 'True' | 'False'
             if (cp->type == "TRUETK" || cp->type == "FALSETK") expDataType = NestDataType(UnaryDataType("basic", "bool"));
             else if (cp->type == "INTCON") expDataType = NestDataType(UnaryDataType("basic", "int"));
             else if (cp->type == "FLOATCON") expDataType = NestDataType(UnaryDataType("basic", "float"));
             else if (cp->type == "LONGCON") expDataType = NestDataType(UnaryDataType("basic", "long"));
             else if (cp->type == "STRCON") expDataType = NestDataType(UnaryDataType("basic", "str"));
+            else {
+                cerr << "[line " << cp->line << "] SemanticError: Unknown primary expression!" << endl;
+                exit(3);
+            }
+            creatNode(aroot, cp->s, "const", expDataType);
 		}
 	}
     else if (type == "LVal") {
         // ['self' '.' ] Ident {'[' Exp ']'} {'.' Ident {'[' Exp ']'}}
+        ap = creatNode(aroot, "", "LVal");
         bool isClassDef = false;
         if (cp->type == "SELFTK") {
             isClassDef = true;
             cp = cp->next->next;
+            creatNode(ap, "self", "self");
+            if (DEBUG) cout << "nowDefClass for self: " << nowDefClass->to_string() << endl;
             if (nowDefClass == nullptr) {
                 cerr << "[line " << cp->line << "] SemanticError: 'self' can only be used in class definition!" << endl;
                 exit(3);
@@ -783,27 +884,25 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
         string var_name = cp->s;
         if (!isClassDef && varMap.find(var_name) != varMap.end()) {
             expDataType = varMap[var_name].top().nest_datatype;
+            creatNode(ap, varMap[var_name].top().new_name, "var", expDataType);
         } else if (isClassDef && nowDefClass->attrs.find(var_name) != nowDefClass->attrs.end()) {
-            expDataType = nowDefClass->attrs[var_name];
+            expDataType = nowDefClass->attrs[var_name].nest_datatype;
+            creatNode(ap, nowDefClass->attrs[var_name].new_name, "attr", expDataType);
         } else if (cp->next == nullptr && croot->next != nullptr && croot->next->type == "LPARENT") {
             string func_name = var_name;
             vector<NestDataType> temp_rparams;
+            ap = creatNode(ap, func_name, "FuncCall");
             if (croot->next->next!= nullptr && croot->next->next->type == "FuncRParams") {
-                temp_rparams = readFuncRParams(croot->next->next->first_child, aroot, level);
+                temp_rparams = readFuncRParams(croot->next->next->first_child, ap, level, DEBUG);
             }
             UnaryFunc f;
-            cout << "funcMap: {";
-            int cnt = 0;
-            for (const auto& it : funcMap) {
-                cout << it.first + ":" + it.second.to_string();
-                if (cnt++ < funcMap.size() - 1) cout << ", ";
-            }
-            cout << "}" << endl;
             if (isClassDef && nowDefClass->funcMap[func_name].find(temp_rparams, f)) {
-                expDataType = f.ret;
+                ap->datatype = expDataType = f.ret;
+                ap->s = f.new_name;
             }
             else if (!isClassDef && funcMap[func_name].find(temp_rparams, f)) {
-                expDataType = f.ret;
+                ap->datatype = expDataType = f.ret;
+                ap->s = f.new_name;
             }
             else {
                 cerr << "[line " << cp->line << "] SemanticError: Cannot find function " << func_name << " with params (";
@@ -821,13 +920,19 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
         cp = cp->next;
 		while (cp != nullptr && cp->type == "LBRACK") {
             cp = cp->next;
+            NestDataType expDataType2 = NestDataType(expDataType.datatype_list[0]);
+            if (expDataType2.datatype_list[0].name == "List")
+                expDataType2.datatype_list[0].name = "int";
             expDataType = expDataType.removeFront();
-            NestDataType expDataType2;
-            semanticAnalysis(cp, aroot, cp->type, expDataType2, level); // Exp
-            cp = cp->next->next;
+            NestDataType expDataType3;
+            ap = creatNode(ap, "", "Index");
+            semanticAnalysis(cp, ap, cp->type, expDataType3, level, DEBUG); // Exp
+            ap->datatype = expDataType3;
+            // 下标类型检查（List的id或者Dict的key）
+            expDataType2.tryAssign(expDataType3, cp->line);
 		}
         while (cp != nullptr && cp->type == "DOT") {
-            cout << "LVAL DOT with expDataType:" << expDataType.to_string() << endl;
+            if (DEBUG) cout << "LVAL DOT with expDataType:" << expDataType.to_string() << endl;
             if (expDataType.datatype_list.size() != 1 || expDataType.datatype_list[0].type != "class") {
                 cerr << "[line " << cp->line << "] SemanticError: Cannot find attribute of non-class type!" << endl;
                 exit(3);
@@ -838,17 +943,20 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
                 exit(3);
             }
             cp = cp->next;
-            cout << "unaryClassMap[" << class_name << "]: " << unaryClassMap[class_name].to_string() << endl;
+            if (DEBUG) cout << "unaryClassMap[" << class_name << "]: " << unaryClassMap[class_name].to_string() << endl;
             string attr_name = cp->s;
             if (cp->next == nullptr && croot->next != nullptr && croot->next->type == "LPARENT") {
                 string func_name = attr_name;
                 vector<NestDataType> temp_rparams;
+                ap = creatNode(ap, func_name, "FuncCall");
                 if (croot->next->next!= nullptr && croot->next->next->type == "FuncRParams") {
-                    temp_rparams = readFuncRParams(croot->next->next->first_child, aroot, level);
+                    temp_rparams = readFuncRParams(croot->next->next->first_child, ap, level, DEBUG);
                 }
                 UnaryFunc f;
                 if (unaryClassMap[class_name].funcMap[func_name].find(temp_rparams, f)) {
                     expDataType = f.ret;
+                    ap->s = f.new_name;
+                    ap->datatype = f.ret;
                 }
                 else {
                     cerr << "[line " << cp->line << "] SemanticError: Cannot find function " << func_name << " of class " << unaryClassMap[class_name].old_name << " !" << endl;
@@ -856,7 +964,8 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
                 }
             }
             else if (unaryClassMap[class_name].attrs.find(attr_name) != unaryClassMap[attr_name].attrs.end()) {
-                expDataType = unaryClassMap[class_name].attrs[attr_name];
+                expDataType = unaryClassMap[class_name].attrs[attr_name].nest_datatype;
+                creatNode(ap, unaryClassMap[class_name].attrs[attr_name].new_name, "attr", expDataType);
             } 
             else {
                 cerr << "[line " << cp->line << "] SemanticError: Undefined attribute identifier '" << var_name << "' of class " << unaryClassMap[class_name].old_name << " !" << endl;
@@ -867,55 +976,87 @@ void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType&
                 cp = cp->next;
                 expDataType = expDataType.removeFront();
                 NestDataType expDataType2;
-                semanticAnalysis(cp, aroot, cp->type, expDataType2, level); // Exp
+                ap = creatNode(ap, "", "Index");
+                semanticAnalysis(cp, ap, cp->type, expDataType2, level, DEBUG); // Exp
                 cp = cp->next->next;
             }
         }
 	}
 	else if (type == "LOrExp") {
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level); // LAndExp
+        ap = aroot;
+        if (cp->next != nullptr) 
+            ap = creatNode(aroot, cp->next->s, "TwoOp");
+        semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // LAndExp
         cp = cp->next;
         while (cp != nullptr && cp->type == "ORTK") {
+            string op = cp->s;
             cp = cp->next;
-            semanticAnalysis(cp, aroot, cp->type, expDataType, level); // LAndExp
+            ASTNode* ap1 = ap;
+            if (cp->next != nullptr) 
+                ap1 = creatNode(ap, cp->next->s, "TwoOp");
+            NestDataType expDataType2;
+            semanticAnalysis(cp, ap1, cp->type, expDataType2, level, DEBUG); // LAndExp
+            // 运算数据类型检查
+            expDataType = expDataType.twoOp(op, expDataType2, cp->line);
             cp = cp->next;
         }
 	}
 	else if (type == "LAndExp") { 
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level); // EqExp
+        ap = aroot;
+        if (cp->next != nullptr) 
+            ap = creatNode(aroot, cp->next->s, "TwoOp");
+        semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // EqExp
         cp = cp->next;
         while (cp != nullptr && cp->type == "ANDTK") {
             string op = cp->s;
             cp = cp->next;
+            ASTNode* ap1 = ap;
+            if (cp->next != nullptr) 
+                ap1 = creatNode(ap, cp->next->s, "TwoOp");
             NestDataType expDataType2;
-            semanticAnalysis(cp, aroot, cp->type, expDataType2, level); // EqExp
+            semanticAnalysis(cp, ap1, cp->type, expDataType2, level, DEBUG); // EqExp
+            // 运算数据类型检查
             expDataType = expDataType.twoOp(op, expDataType2, cp->line);
             cp = cp->next;
         }
 	}
 	else if (type == "EqExp") { 
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level); // RelExp
+        ap = aroot;
+        if (cp->next != nullptr) 
+            ap = creatNode(aroot, cp->next->s, "TwoOp");
+        semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // RelExp
         cp = cp->next;
         while (cp != nullptr && (cp->type == "EQL" || cp->type == "NEQ")) {
             string op = cp->s;
             cp = cp->next;
+            ASTNode* ap1 = ap;
+            if (cp->next != nullptr) 
+                ap1 = creatNode(ap, cp->next->s, "TwoOp");
             NestDataType expDataType2;
-            semanticAnalysis(cp, aroot, cp->type, expDataType2, level); // RelExp
+            semanticAnalysis(cp, ap1, cp->type, expDataType2, level, DEBUG); // RelExp
+            // 运算数据类型检查
             expDataType = expDataType.twoOp(op, expDataType2, cp->line);
             cp = cp->next;
         }
 	}
-	else if (type == "RelExp") { 
-        semanticAnalysis(cp, aroot, cp->type, expDataType, level); // AddExp
+	else if (type == "RelExp") {
+        ap = aroot;
+        if (cp->next != nullptr) 
+            ap = creatNode(aroot, cp->next->s, "TwoOp");
+        semanticAnalysis(cp, ap, cp->type, expDataType, level, DEBUG); // AddExp
         cp = cp->next;
         while (cp != nullptr && (cp->type == "GRE" || cp->type == "LSS" || cp->type == "GEQ" || cp->type == "LEQ")) {      
             string op = cp->s;
             cp = cp->next;
+            ASTNode* ap1 = ap;
+            if (cp->next != nullptr) 
+                ap1 = creatNode(ap, cp->next->s, "TwoOp");
             NestDataType expDataType2;
-            semanticAnalysis(cp, aroot, cp->type, expDataType2, level); // AddExp
+            semanticAnalysis(cp, ap1, cp->type, expDataType2, level, DEBUG); // AddExp
+            // 运算数据类型检查
             expDataType = expDataType.twoOp(op, expDataType2, cp->line);
             cp = cp->next;
         }
 	}
-    cout << "[" << type << "] return expDataType=" << expDataType.to_string() << endl;
+    if (DEBUG) cout << "[" << type << "] return expDataType=" << expDataType.to_string() << endl;
 }
