@@ -101,6 +101,7 @@ class UnaryDataType
                     || (d.name == "None" && name != "None")
                     || (d.name != "None" && name == "None")) {
                     cerr << "[line " << line << "] SemanticError: Basic type " << name << " cannot be assigned type " << d.name << "!" << endl;
+                    exit(3);
                 }
             }
             else if (type == "class") {
