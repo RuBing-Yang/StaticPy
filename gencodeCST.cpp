@@ -21,9 +21,10 @@ string cpp_unaryop(string s) {
 
 void genCSTCppCode(CSTNode *root, string type, ofstream *outfile, string prefix, int DEBUG){
     if (root == nullptr) return;
+    if (DEBUG) cout << "[" + type + "] begin " << root->s << endl;
     CSTNode* p = root->first_child;
     if (type == "CompUnit") {
-        cout << "Generating C++ code..." << endl;
+        cout << "Generating C++ code from CST..." << endl;
         (*outfile) << "#include <iostream>" << endl;
         (*outfile) << "#include <map>" << endl;
         (*outfile) << "#include <vector>" << endl;
@@ -206,23 +207,23 @@ void genCSTCppCode(CSTNode *root, string type, ofstream *outfile, string prefix,
         else if (p->type == "LBRACE") {  // Dict
             (*outfile) << "{";
             p = p->next;
-            if (p->type == "InitVal") {
+            if (p->type == "Exp") {
                 (*outfile) << "{";
-                genCSTCppCode(p, p->type, outfile, prefix, DEBUG);  // InitVal
+                genCSTCppCode(p, p->type, outfile, prefix, DEBUG);  // key: Exp
                 p = p->next;
                 (*outfile) << ", ";  // COLON
                 p = p->next;
-                genCSTCppCode(p, p->type, outfile, prefix, DEBUG);  // InitVal
+                genCSTCppCode(p, p->type, outfile, prefix, DEBUG);  // value: InitVal
                 p = p->next;
                 (*outfile) << "}";
                 while (p->type == "COMMA") {
                     p = p->next;
                     (*outfile) << ", {";
-                    genCSTCppCode(p, p->type, outfile, prefix, DEBUG);  // InitVal
+                    genCSTCppCode(p, p->type, outfile, prefix, DEBUG);  // key: Exp
                     p = p->next;
                     (*outfile) << ", ";  // COLON
                     p = p->next;
-                    genCSTCppCode(p, p->type, outfile, prefix, DEBUG);  // InitVal
+                    genCSTCppCode(p, p->type, outfile, prefix, DEBUG);  // value: InitVal
                     p = p->next;
                     (*outfile) << "}";
                 }
@@ -495,4 +496,5 @@ void genCSTCppCode(CSTNode *root, string type, ofstream *outfile, string prefix,
             p = p->next;
         }
 	}
+    if (DEBUG) cout << "[" + type + "] end" << endl;
 }

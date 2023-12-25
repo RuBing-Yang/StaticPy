@@ -36,7 +36,7 @@ void printAST(const string prefix, const ASTNode* node, ofstream *outfile, bool 
 int main(int argc, char* argv[])
 {
     ifstream in_file;
-	ofstream lex_file, grammar_file, cst_file, ast_file, cpp_file;
+	ofstream lex_file, grammar_file, cst_file, ast_file, cpp_cst_file, cpp_ast_file;
     string testfile_name = "files/testfile.txt";
     int DEBUG = 0;
 
@@ -52,7 +52,8 @@ int main(int argc, char* argv[])
     grammar_file.open("files/out/grammar_file.txt");
     ast_file.open("files/out/ast_file.txt");
     cst_file.open("files/out/cst_file.txt");
-    cpp_file.open("files/out/cpp_file.cpp");
+    cpp_cst_file.open("files/out/cpp_cst_file.cpp");
+    cpp_ast_file.open("files/out/cpp_ast_file.cpp");
 
     lexAnalysis(&in_file, &token, &lex_file, DEBUG);
     grammarAnalysis(&token, "CompUnit", croot, &grammar_file, DEBUG);
@@ -60,7 +61,13 @@ int main(int argc, char* argv[])
     semanticAnalysis(croot, aroot, "CompUnit", expDataType, 0, DEBUG);
     printAST("", aroot, &ast_file);
 
-    genCSTCppCode(croot, "CompUnit", &cpp_file, "", DEBUG);
+    genCSTCppCode(croot, "CompUnit", &cpp_cst_file, "", DEBUG);
+
+    vector<string> cpp_lines;
+    genASTCppCode(aroot, "CompUnit", cpp_lines, "", DEBUG);
+    for (string line : cpp_lines) {
+        cpp_ast_file << line << endl;
+    }
 
 	return 0;
 }

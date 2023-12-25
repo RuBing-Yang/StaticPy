@@ -17,7 +17,7 @@
 ## 运行
 
 ```bash
-g++ main.cpp lex.cpp grammar.cpp semantic.cpp gencodeCST.cpp -o compiler
+g++ main.cpp lex.cpp grammar.cpp semantic.cpp gencodeCST.cpp gencodeAST.cpp -o compiler
 # DEBUG模式后面加1
 .\compiler.exe "files/test_mini.txt"
 .\compiler.exe "files/test_example.txt"
@@ -25,7 +25,8 @@ g++ main.cpp lex.cpp grammar.cpp semantic.cpp gencodeCST.cpp -o compiler
 .\compiler.exe "files/test_class.txt"
 .\compiler.exe "files/test_stl.txt"
 .\compiler.exe "files/test_generic.txt"
-g++ files\out\cpp_file.cpp -o cpp_output
+g++ files\out\cpp_cst_file.cpp -o cpp_output
+g++ files\out\cpp_ast_file.cpp -o cpp_output
 .\cpp_output.exe
 ```
 
@@ -220,20 +221,21 @@ class ClassList {
 | type         | s                                                | datatype                      | 子节点                                                 | 描述                                  |
 | ------------ | ------------------------------------------------ | ----------------------------- | ------------------------------------------------------ | ------------------------------------- |
 | CompUnit     |                                                  |                               | {ClassDef}, {FuncDef}                                  |                                       |
-| ClassDef     | 类名class_id                                     | class class_name              | {ClassAttrDef}, {ClassInitDef}, {ClassFuncDef}, Block  | 类定义                                |
+| ClassDef     | 类名class_id                                     | class class_name              | {ClassAttrDef}, {ClassInitDef}, {ClassFuncDef}         | 类定义                                |
 | ClassAttrDef | 类属性名var_id                                   | 属性数据类型                  |                                                        |                                       |
-| ClassInitDef | 类函数名func_id                                  | class class_name              | Block                                                  |                                       |
-| ClassFuncDef | 类函数名func_id                                  | 函数返回数据类型              | Block                                                  |                                       |
+| ClassInitDef | 类函数名func_id                                  | class class_name              | {FuncFParam}, Block                                    |                                       |
+| ClassFuncDef | 类函数名func_id                                  | 函数返回数据类型              | {FuncFParam}, Block                                    |                                       |
 | FuncDef      | 函数名func_id                                    | 函数返回数据类                | {FuncFParam}, Block                                    | 函数定义                              |
 | FuncFParam   | 函数形参名var_id                                 | 形参数据类型                  |                                                        |                                       |
-| Block        |                                                  |                               |                                                        | 代码块                                |
+| Block        |                                                  |                               | Decl, Stmt                                             | 代码块                                |
 | Decl         | =                                                |                               | 变量var，赋值InitVal (ListInitVal / DictInitVal / Exp) |                                       |
 |              | 变量名                                           | 变量数据类型                  |                                                        |                                       |
-| ListInitVal  |                                                  |                               | {列表元素}                                             | 每个列表元素是InitVal，允许嵌套       |
+| ListInitVal  |                                                  |                               | {InitVal}                                              | 每个列表元素是InitVal，允许嵌套       |
 | DictInitVal  |                                                  |                               | {DictElement}                                          |                                       |
 | DictElement  |                                                  |                               | Exp, Exp / InitVal                                     | key - value，value可以继续嵌套InitVal |
 | Stmt         | =                                                |                               | LVal, Exp                                              |                                       |
-|              | append                                           |                               | Exp                                                    |                                       |
+|              | Exp                                              | 由运算结果决定                | 子运算树                                               |                                       |
+|              | append                                           |                               | LVal, Exp                                              |                                       |
 |              | if                                               |                               | Exp, Block[, Block]                                    | 可能有else对应的Block                 |
 |              | while                                            |                               | Exp, Block                                             |                                       |
 |              | break/continue                                   |                               |                                                        |                                       |
@@ -247,8 +249,7 @@ class ClassList {
 | self         | self                                             |                               |                                                        |                                       |
 | var          | 变量名var_id                                     | 变量数据类型                  |                                                        |                                       |
 | attr         | 类属性名var_id                                   | 属性数据类型                  |                                                        |                                       |
-| FuncCall     | 函数名                                           | 函数返回数据类型              | {FuncRParam}                                           |                                       |
-| FuncRParam   |                                                  |                               | Exp                                                    | 函数实参                              |
+| FuncCall     | 函数名                                           | 函数返回数据类型              | {Exp}                                                  | 函数实参                              |
 | Index        |                                                  | 索引数据类型                  | Exp                                                    |                                       |
 
 

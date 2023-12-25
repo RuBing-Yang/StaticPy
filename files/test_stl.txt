@@ -14,7 +14,7 @@ def main() -> int:
     l.append(4)
     l2: List[int] = func2(l)
     i: int = 0
-    while i < 4:
+    while i < 4 and i < 5:
         print("List[int] [", i, "] = ", l2[i])
         i = i + 1
 

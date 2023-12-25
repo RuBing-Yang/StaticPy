@@ -20,12 +20,12 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile, int DEBUG)
         }
         if (i >= s.length()) continue;
         if (blank % 4 != 0) {
-            cerr << "[line " << line << "] IndentationError: Indent is not an integer number of tabs!" << endl;
+            cerr << "[line " << line << "] LexError: Indent is not an integer number of tabs!" << endl;
 	        exit(1);
         }
         if (blank / 4 > last_tab) {
             if (blank / 4 > last_tab + 1) {
-                cerr << "[line " << line << "] IndentationError: Exceed one tab one time!" << endl;
+                cerr << "[line " << line << "] LexError: Exceed one tab one time!" << endl;
 	            exit(1);
             }
             q = new Token("AddTab", "ADDTAB", line);
@@ -73,7 +73,7 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile, int DEBUG)
                     t += s[i++];
                 }
                 if (isalpha(s[i])) { //数字后面紧跟着字母
-                    cerr << "[line " << line << "] SyntaxError: identifier starts immediately after numeric literal" << endl;
+                    cerr << "[line " << line << "] LexError: identifier starts immediately after numeric literal" << endl;
 	                exit(1);
                 }
                 if (!isFloat) {
@@ -87,7 +87,7 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile, int DEBUG)
                             q = new Token(t, "INTCON", line);
                         }
                     } catch (const std::out_of_range& oor) {
-                        cerr << "[line " << line << "] SyntaxError: long literal too large exceed 64bits" << endl;
+                        cerr << "[line " << line << "] LexError: long literal too large exceed 64bits" << endl;
                         exit(1);
                     }
                 } else {
@@ -140,7 +140,7 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile, int DEBUG)
                 }
                 t += '"';
                 if (i >= s.length()) {
-                    cerr << "[line " << line << "] SyntaxError: Missing matching closing quote" << endl;
+                    cerr << "[line " << line << "] LexError: Missing matching closing quote" << endl;
 	                exit(1);
                 }
                 q = new Token(t, "STRCON", line);
@@ -244,7 +244,7 @@ void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile, int DEBUG)
                 i++;
             }
             else {
-                cerr << "[line " << line << "] Undefined characters:" << s[i] << endl;
+                cerr << "[line " << line << "] LexError: Undefined characters:" << s[i] << endl;
                 i++;
                 continue;
             }

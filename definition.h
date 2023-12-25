@@ -47,6 +47,8 @@ typedef struct CSTNode
     struct CSTNode* last_child;
 }CSTNode;
 
+struct ASTNode;
+
 extern void lexAnalysis(ifstream *infile, TOKEN **token, ofstream *outfile=nullptr, int DEBUG=0);
 
 extern void grammarAnalysis(TOKEN **token, string type, CSTNode *root, ofstream *outfile=nullptr, int DEBUG=0);
@@ -107,7 +109,7 @@ class UnaryDataType
                     exit(3);
                 }
                 if (name != d.name) {
-                    cerr << "[line " << line << "] SemanticError: Class " << name << " cannot be assigned different Class" << d.name << "!" << endl;
+                    cerr << "[line " << line << "] SemanticError: Class " << name << " cannot be assigned different Class " << d.name << "!" << endl;
                     exit(3);
                 }
             }
@@ -143,16 +145,16 @@ class UnaryDataType
                     exit(3);
                 }
             }
-            if (type == "float" && d.type == "long" || (type == "long" && d.type == "float")) {
+            if (name == "float" && d.name == "long" || (name == "long" && d.name == "float")) {
                 cerr << "[line " << line << "] SemanticError: Float and Long cannot be operated by " << op << "!" << endl;
             }
             if (op == "!=" || op == "==" || op == "<" || op == ">" || op == "<=" || op == ">=" || op == "and" || op == "or") {
                 return UnaryDataType("basic", "bool");
             }
-            if (type == "float" || d.type == "float") {
+            if (name == "float" || d.name == "float") {
                 return UnaryDataType("basic", "float");
             }
-            if (type == "long" || d.type == "long") {
+            if (name == "long" || d.name == "long") {
                 return UnaryDataType("basic", "long");
             }
             if (op == "+" || op == "-" || op == "*" || op == "/" || op == "%") {
@@ -238,7 +240,9 @@ class NestDataType
                 cerr << "[line " << line << "] SemanticError: NestDataType size of op " << op << " is " << d.size() << "!" << endl;
                 exit(3);
             }
-            return NestDataType(datatype_list[0].twoOp(op, d.datatype_list[0], line));
+            NestDataType res = NestDataType(datatype_list[0].twoOp(op, d.datatype_list[0], line));
+            // cout << "TwoOp(" << op << ") left=" << to_string() << ", right=" << d.to_string() << " = " << res.to_string() << endl;
+            return res;
         }
 };
 
@@ -325,6 +329,7 @@ class UnaryFunc
         string new_name;
         string old_name;
         CSTNode* cst_root = nullptr;
+        ASTNode* ast_root = nullptr;
         map<string, int> generic_name2id;
         vector<UnaryDataType> generics;  // 泛型取值
         vector<NestDataType> fparams;
@@ -356,8 +361,11 @@ class UnaryFunc
             }
         }
         UnaryFunc copy(string type) {
-            if (type == "template")
-            return UnaryFunc(new_name, old_name, generic_name2id, generics);
+            if (type == "template") {
+                UnaryFunc f = UnaryFunc(new_name, old_name, generic_name2id, generics);
+                f.ast_root = ast_root;
+                return f;
+            }
             cout << "你要复制什么玩意？" << endl;
             return UnaryFunc();
         }
@@ -566,6 +574,7 @@ class UnaryClass
         string new_name;
         string old_name;
         CSTNode* cst_root = nullptr;
+        ASTNode* ast_root = nullptr;
         map<string, int> generic_name2id;
         vector<UnaryDataType> generics;  // 泛型取值
         map<string, UnaryVar> attrs;
@@ -582,15 +591,18 @@ class UnaryClass
                 generics.push_back(d);
             }
         }
-        UnaryClass copy(string type) {
-            if (type == "template")
-            return UnaryClass(new_name, old_name, generic_name2id, generics);
+        UnaryClass copy(string type) {            
+            if (type == "template") {
+                UnaryClass c = UnaryClass(new_name, old_name, generic_name2id, generics);
+                c.ast_root = ast_root;
+                return c;
+            }
             cout << "你要复制什么玩意？" << endl;
             return UnaryClass();
         }
 
         string to_string () const {
-            string s = old_name + " { attrs:{";
+            string s = old_name + " (" + new_name + ") { attrs:{";
             int cnt = 0;
             for (const auto& it : attrs) {
                 s += it.first + ":" + it.second.to_string();
@@ -681,3 +693,5 @@ typedef struct ASTNode
 }ASTNODE;
 
 extern void semanticAnalysis(CSTNode *croot, ASTNode *aroot, string type, NestDataType& expDataType, int level, int DEBUG=0);
+
+extern void genASTCppCode(ASTNode *root, string type, vector<string> &output_lines, string prefix, int DEBUG=0);
